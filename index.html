@@ -3,45 +3,140 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#46163d">
-  <meta name="description" content="Liebe auf den ersten Log — a bilingual pixel-art geocaching dating sim.">
+  <meta name="theme-color" content="#2b1630">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Liebe auf den ersten Log — ein zweisprachiges Pixel-Art-Datingspiel, das dir die Final-Koordinaten eines Geocaches verrät. A bilingual pixel-art dating sim that reveals a geocache's final coordinates.">
   <title>Liebe auf den ersten Log</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>💗</text></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="hearts" aria-hidden="true"></div>
-  <main class="game-shell">
-    <header>
-      <div class="brand">
-        <span class="pixel-heart" aria-hidden="true">♥</span>
-        <div><h1>Liebe auf den ersten Log</h1><p id="subtitle">Ein chaotisches Geocaching-Datingspiel</p></div>
+
+<!-- ===================== TITLE SCREEN ===================== -->
+<div id="titleScreen" class="overlay">
+  <div class="title-card">
+    <canvas id="titleCanvas" width="320" height="180" aria-hidden="true"></canvas>
+    <div class="title-text">
+      <p class="kicker" id="titleKicker">GC-PUZZLE · DE / EN</p>
+      <h1>Liebe auf<br>den ersten Log</h1>
+      <p id="titleSub" class="title-sub"></p>
+      <div class="title-actions">
+        <button id="btnContinue" class="btn primary" type="button" hidden></button>
+        <button id="btnStart" class="btn primary" type="button"></button>
+        <button id="btnTitleLang" class="btn" type="button">EN</button>
       </div>
-      <nav aria-label="Game settings">
-        <button id="langBtn" class="tool" type="button" aria-label="Switch language">EN</button>
-        <button id="soundBtn" class="tool" type="button" aria-label="Toggle sound" aria-pressed="false">♪ OFF</button>
-        <button id="restartBtn" class="tool danger" type="button">↻ Neustart</button>
-      </nav>
-    </header>
+      <p class="title-note" id="titleNote"></p>
+    </div>
+  </div>
+</div>
 
-    <section class="screen" aria-label="Game scene">
-      <canvas id="scene" width="960" height="500" role="img" aria-label="Pixel art geocaching scene"></canvas>
-      <div class="hud" aria-live="polite">
-        <div><span id="affLabel">Zuneigung</span><div class="meter"><i id="affBar"></i></div><b id="affValue">0</b></div>
-        <div><span id="logLabel">Log-Qualität</span><div class="meter gold"><i id="logBar"></i></div><b id="logValue">0</b></div>
+<!-- ===================== GAME ===================== -->
+<div id="app" class="app" hidden>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-heart" aria-hidden="true">♥</span>
+      <div>
+        <h1 class="brand-title">Liebe auf den ersten Log</h1>
+        <p class="brand-sub" id="uiSubtitle"></p>
       </div>
-      <div id="badge" class="badge" hidden></div>
-    </section>
+    </div>
+    <nav class="tools" aria-label="Einstellungen / Settings">
+      <button id="langBtn" class="btn tiny" type="button" aria-label="Sprache / Language">EN</button>
+      <button id="soundBtn" class="btn tiny" type="button" aria-pressed="false">♪</button>
+      <button id="restartBtn" class="btn tiny danger" type="button">↻</button>
+    </nav>
+  </header>
 
-    <section class="dialogue" aria-live="polite">
-      <div class="speaker-row"><span id="portrait" aria-hidden="true">🧭</span><h2 id="speaker">R-3MI &amp; V-TGM</h2></div>
-      <p id="text"></p>
-      <div id="choices" class="choices"></div>
-      <p id="hint" class="hint">Tippe eine Antwort an oder nutze 1–3.</p>
-    </section>
+  <div class="layout">
 
-    <footer><p id="saveNote">● Fortschritt wird lokal gespeichert</p><p id="disclaimer">Inoffizielles, nicht-kommerzielles Fanprojekt. Nicht mit Geocaching HQ oder Groundspeak verbunden. Bitte verantwortungsvoll cachen.</p></footer>
-  </main>
-  <noscript>This game needs JavaScript. / Dieses Spiel benötigt JavaScript.</noscript>
-  <script src="game.js"></script>
+    <main class="stage-col">
+      <section class="screen">
+        <canvas id="stage" width="320" height="180" role="img"
+                aria-label="Pixel-Art-Szene / Pixel art scene"></canvas>
+
+        <div class="hud">
+          <div class="meter-row">
+            <span id="affLabel"></span>
+            <div class="meter"><i id="affBar"></i></div>
+            <b id="affVal">0</b>
+          </div>
+          <div class="meter-row">
+            <span id="logLabel"></span>
+            <div class="meter gold"><i id="logBar"></i></div>
+            <b id="logVal">0</b>
+          </div>
+        </div>
+
+        <div id="routeChip" class="route-chip" hidden></div>
+        <button id="skipBtn" class="skip-btn" type="button" hidden></button>
+      </section>
+
+      <section class="dialogue">
+        <div class="speaker-row">
+          <canvas id="portrait" width="48" height="72" aria-hidden="true"></canvas>
+          <h2 id="speaker"></h2>
+        </div>
+        <p id="dialogueText"></p>
+        <p id="srLive" class="sr-only" aria-live="polite"></p>
+        <div id="choices" class="choices"></div>
+        <p id="hint" class="hint"></p>
+      </section>
+    </main>
+
+    <!-- ===================== THE GPSr ===================== -->
+    <aside class="gps" aria-label="GPS">
+      <div class="gps-head">
+        <h2 id="gpsTitle"></h2>
+        <span id="gpsStatus" class="gps-status"></span>
+      </div>
+
+      <div class="gps-screen">
+        <div class="coord-line"><span class="coord-fix" id="latFix"></span><span id="latSlots" class="slots"></span></div>
+        <div class="coord-line"><span class="coord-fix" id="lonFix"></span><span id="lonSlots" class="slots"></span></div>
+        <div class="gps-sats" id="gpsSats" aria-hidden="true"></div>
+      </div>
+
+      <p class="gps-sub" id="gpsSub"></p>
+
+      <ul class="gps-routes" id="gpsRoutes"></ul>
+
+      <dl class="gps-meta">
+        <div><dt id="postedLabel"></dt><dd id="postedValue"></dd></div>
+        <div><dt id="checksumLabel"></dt><dd id="checksumValue">—</dd></div>
+        <div id="distanceRow" hidden><dt id="distanceLabel"></dt><dd id="distanceValue"></dd></div>
+      </dl>
+
+      <div class="gps-actions">
+        <button id="btnCopy" class="btn small" type="button" disabled></button>
+        <button id="btnMap" class="btn small" type="button" disabled></button>
+        <button id="btnChecker" class="btn small" type="button" hidden></button>
+      </div>
+
+      <details id="hintBox" class="gps-hint" hidden>
+        <summary id="hintLabel"></summary>
+        <p id="hintValue"></p>
+      </details>
+    </aside>
+  </div>
+
+  <footer class="footer">
+    <p><span class="dot"></span><span id="saveNote"></span> · <span id="offlineNote"></span></p>
+    <p id="disclaimer"></p>
+  </footer>
+</div>
+
+<noscript>
+  <p style="padding:1rem;color:#fff;font-family:monospace">
+    Dieses Spiel braucht JavaScript. / This game needs JavaScript.
+  </p>
+</noscript>
+
+<script src="js/coords.js"></script>
+<script src="js/art.js"></script>
+<script src="js/scenes.js"></script>
+<script src="js/story.js"></script>
+<script src="js/game.js"></script>
 </body>
 </html>

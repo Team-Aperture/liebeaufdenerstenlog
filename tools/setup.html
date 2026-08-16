@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache Owner Console — Liebe auf den ersten Log</title>
+<style>
+  :root { --ink:#2b1630; --cream:#fff6ea; --pink:#ff5d9e; --deep:#7c2455;
+          --gold:#ffc857; --lcd:#0f2a22; --lcd-lit:#7dfab4; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: clamp(12px,3vw,32px);
+    font: 14px/1.6 ui-monospace, "SF Mono", "DejaVu Sans Mono", "Courier New", monospace;
+    color: var(--ink);
+    background: linear-gradient(150deg,#2a0f33,#6d1f4f 55%,#b83a67);
+  }
+  main { width: min(880px,100%); margin: auto; background: var(--cream);
+         border: 4px solid var(--ink); box-shadow: 12px 12px 0 #12061a88; }
+  header { padding: 16px 20px; background:#ffd1e0; border-bottom:4px solid var(--ink); }
+  h1 { margin:0; font-size: clamp(18px,3.4vw,26px); color: var(--deep); }
+  header p { margin:6px 0 0; font-size:12px; }
+  section { padding: 18px 20px; border-bottom: 2px dashed #d9bfd0; }
+  h2 { font-size:12px; letter-spacing:.16em; color:var(--deep); margin:0 0 12px; }
+  label { display:block; margin:0 0 12px; font-size:12px; }
+  label span { display:block; margin-bottom:4px; color:#6f4a68; }
+  input {
+    width:100%; padding:9px 10px; font:inherit; font-size:13px;
+    border:2px solid var(--ink); background:#fff;
+  }
+  .grid { display:grid; gap:0 14px; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); }
+  .hintline { font-size:11px; color:#7a5a72; margin:-6px 0 12px; }
+  button {
+    font:700 13px inherit; padding:10px 14px; cursor:pointer;
+    border:2px solid var(--ink); background:var(--pink); color:#fff;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  button:hover { background: var(--gold); color: var(--ink); }
+  button.sec { background:#fff; color:var(--ink); }
+  pre {
+    margin:12px 0 0; padding:14px; overflow:auto;
+    background:var(--lcd); color:var(--lcd-lit);
+    border:3px solid #0a1a15; font-size:12px; line-height:1.5;
+  }
+  .status { margin-top:10px; font-size:12px; padding:9px 11px; border:2px solid var(--ink); }
+  .ok  { background:#d8f7e4; }
+  .bad { background:#ffd9de; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  footer { padding:14px 20px; font-size:11px; color:#6f4a68; }
+  code { background:#f3e4ef; padding:1px 4px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Cache Owner Console</h1>
+    <p>Turn your real final coordinates into a masked config block for <code>js/coords.js</code>.
+       Nothing leaves this page — it all runs locally in your browser.</p>
+  </header>
+
+  <section>
+    <h2>1 · YOUR FINAL COORDINATES</h2>
+    <label>
+      <span>Paste them in any usual format</span>
+      <input id="finalIn" value="N 50° 07.462 E 008° 41.235"
+             placeholder="N 50 07.462 E 008 41.235">
+    </label>
+    <p class="hintline">Understood: <code>N 50° 07.462 E 008° 41.235</code>,
+       <code>N50 07.462 E008 41.235</code>, <code>5007.462N 00841.235E</code>.
+       Degrees-minutes-decimals only — that is what a listing uses.</p>
+    <div class="status" id="parseStatus">—</div>
+  </section>
+
+  <section>
+    <h2>2 · LISTING DETAILS</h2>
+    <div class="grid">
+      <label><span>GC code</span><input id="gc" value="GC1LOVE"></label>
+      <label><span>Cache name</span><input id="name" value="Liebe auf den ersten Log"></label>
+      <label><span>Owner</span><input id="owner" value="Team Aperture"></label>
+      <label><span>Posted (listing) coordinates</span><input id="posted" value="N 50° 00.000 E 008° 00.000"></label>
+      <label><span>Checker URL (optional)</span><input id="checker" placeholder="https://geocheck.org/..."></label>
+      <label><span>Hint, plain text (optional)</span><input id="hint" placeholder="Under the third stone"></label>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · CONFIG BLOCK</h2>
+    <div class="row">
+      <button id="gen" type="button">Generate</button>
+      <button id="copy" class="sec" type="button">Copy</button>
+      <span id="sum" style="font-size:12px"></span>
+    </div>
+    <pre id="out">Press Generate.</pre>
+    <div class="status ok" id="verify">—</div>
+    <p class="hintline" style="margin-top:12px">
+      Paste this over the <code>CACHE_CONFIG</code> object near the top of
+      <code>js/coords.js</code>, then bump <code>CACHE</code> in <code>sw.js</code>
+      so returning players do not get the cached old build.
+    </p>
+  </section>
+
+  <footer>
+    The mask keeps your coordinates out of plain sight in the published source.
+    It is obfuscation, not encryption — see the README for what that does and
+    does not protect against, and pair it with a checker if it matters to you.
+  </footer>
+</main>
+
+<script src="../js/coords.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+/* -------------------------------------------------------------------
+ * Coordinate parsing. Deliberately forgiving: cache owners paste all
+ * sorts of things, and a wrong parse here would publish a wrong cache.
+ * ------------------------------------------------------------------- */
+/**
+ * Reads one half (a latitude or a longitude) from its number tokens.
+ * Covers the shapes people actually paste:
+ *   ["50","07.462"]      degrees + decimal minutes
+ *   ["5007.462"]         degrees and minutes run together
+ *   ["50","7","27.7"]    degrees, minutes, seconds
+ *   ["50.12437"]         decimal degrees
+ */
+function parseHalf(tokens) {
+  if (tokens.length === 2) {
+    return { deg: parseInt(tokens[0], 10), min: parseFloat(tokens[1]) };
+  }
+  if (tokens.length === 3) {
+    return {
+      deg: parseInt(tokens[0], 10),
+      min: parseFloat(tokens[1]) + parseFloat(tokens[2]) / 60
+    };
+  }
+  if (tokens.length === 1) {
+    const parts = tokens[0].split(".");
+    const whole = parts[0];
+    const frac = parts[1] || "";
+    /* Four or more leading digits can only be DDMM / DDDMM run together:
+       no coordinate has a four-digit degree value. */
+    if (whole.length >= 4) {
+      return {
+        deg: parseInt(whole.slice(0, -2), 10),
+        min: parseFloat(whole.slice(-2) + (frac ? "." + frac : ""))
+      };
+    }
+    const dd = parseFloat(tokens[0]);
+    return { deg: Math.floor(dd), min: (dd - Math.floor(dd)) * 60 };
+  }
+  return null;
+}
+
+function parseCoords(raw) {
+  const s = String(raw).toUpperCase()
+    .replace(/[\u00b0\u0027\u2032\u2033]/g, " ")
+    .replace(/,/g, ".")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const latMatch = s.match(/[NS]/);
+  const lonMatch = s.match(/[EW]/);
+  if (!latMatch || !lonMatch) {
+    return { error: "Could not find both a N/S and an E/W part." };
+  }
+
+  /* Both halves are always written the same way round, so an even list of
+     numbers splits cleanly down the middle. That is far more reliable
+     than guessing whether the hemisphere letters lead or trail. */
+  const nums = s.match(/\d+(?:\.\d+)?/g) || [];
+  if (nums.length < 2 || nums.length % 2 !== 0) {
+    return { error: "Expected the same count of numbers on each side (found " + nums.length + ")." };
+  }
+  const k = nums.length / 2;
+  if (k > 3) return { error: "Too many numbers to interpret." };
+
+  const lat = parseHalf(nums.slice(0, k));
+  const lon = parseHalf(nums.slice(k));
+  if (!lat || !lon) return { error: "Could not interpret the numbers." };
+  lat.hem = latMatch[0];
+  lon.hem = lonMatch[0];
+
+  if (lat.deg > 90 || lon.deg > 180) return { error: "Degrees out of range." };
+  if (lat.min >= 60 || lon.min >= 60) return { error: "Minutes must be under 60." };
+
+  const pad = (v, w) => String(v).padStart(w, "0");
+  const minDigits = (m) => {
+    const [a, b] = m.toFixed(3).split(".");
+    return pad(a, 2) + b;   // "7.462" -> "07" + "462"
+  };
+  const latD = minDigits(lat.min);
+  const lonD = minDigits(lon.min);
+
+  return {
+    latHem: lat.hem, latDeg: lat.deg,
+    lonHem: lon.hem, lonDeg: lon.deg,
+    digits: latD + lonD,
+    pretty: lat.hem + " " + pad(lat.deg, 2) + "° " + latD.slice(0, 2) + "." + latD.slice(2) +
+            "  " + lon.hem + " " + pad(lon.deg, 3) + "° " + lonD.slice(0, 2) + "." + lonD.slice(2)
+  };
+}
+
+function refreshParse() {
+  const p = parseCoords($("finalIn").value);
+  const el = $("parseStatus");
+  if (p.error) {
+    el.className = "status bad";
+    el.textContent = "✗ " + p.error;
+    return null;
+  }
+  el.className = "status ok";
+  el.textContent = "✓ " + p.pretty + "   ·   secret digits ABCDEFGHIJ = " + p.digits;
+  return p;
+}
+
+function generate() {
+  const p = refreshParse();
+  if (!p) { $("out").textContent = "Fix the coordinates first."; return; }
+
+  const cipher = GEO.encode(p.digits);
+  const back = GEO.decode(cipher);
+  const hint = $("hint").value.trim();
+
+  const cfg =
+'  const CACHE_CONFIG = {\n' +
+'    gcCode: ' + JSON.stringify($("gc").value.trim()) + ',\n' +
+'    cacheName: ' + JSON.stringify($("name").value.trim()) + ',\n' +
+'    owner: ' + JSON.stringify($("owner").value.trim()) + ',\n\n' +
+'    postedCoords: ' + JSON.stringify($("posted").value.trim()) + ',\n\n' +
+'    latHem: ' + JSON.stringify(p.latHem) + ',\n' +
+'    latDeg: ' + p.latDeg + ',\n' +
+'    lonHem: ' + JSON.stringify(p.lonHem) + ',\n' +
+'    lonDeg: ' + p.lonDeg + ',\n\n' +
+'    cipher: ' + JSON.stringify(cipher) + ',\n' +
+'    masked: true,\n\n' +
+'    checkerUrl: ' + JSON.stringify($("checker").value.trim()) + ',\n' +
+'    hintRot13: ' + JSON.stringify(hint ? GEO.rot13(hint) : "") + ',\n' +
+'    distanceFromPostedMeters: 0\n' +
+'  };';
+
+  $("out").textContent = cfg;
+  $("sum").textContent = "cross-sum " + GEO.checksum(p.digits);
+
+  const ok = back === p.digits;
+  $("verify").className = "status " + (ok ? "ok" : "bad");
+  $("verify").textContent = ok
+    ? "✓ Round-trip verified: the game decodes this back to " + p.pretty
+    : "✗ Round-trip FAILED (" + back + "). Do not publish this.";
+}
+
+$("gen").addEventListener("click", generate);
+$("finalIn").addEventListener("input", refreshParse);
+$("copy").addEventListener("click", () => {
+  const text = $("out").textContent;
+  navigator.clipboard.writeText(text).then(
+    () => { $("copy").textContent = "Copied!"; setTimeout(() => { $("copy").textContent = "Copy"; }, 1400); },
+    () => {}
+  );
+});
+
+refreshParse();
+generate();
+</script>
+</body>
+</html>
