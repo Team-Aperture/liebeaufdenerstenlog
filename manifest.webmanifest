@@ -1,0 +1,21 @@
+{
+  "name": "Liebe auf den ersten Log",
+  "short_name": "Erster Log",
+  "description": "Ein zweisprachiges Pixel-Art-Datingspiel, das die Final-Koordinaten eines Geocaches verrät.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2b1630",
+  "theme_color": "#2b1630",
+  "lang": "de",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
