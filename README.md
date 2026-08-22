@@ -66,8 +66,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v5"` to `-v6`,
-`-v7`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v6"` to `-v7`,
+`-v8`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
@@ -170,6 +170,12 @@ cache means editing that one file and nothing else.
 
 Difficulty lives in `STORY.GOLD` and `STORY.SILVER` near the bottom of
 `js/story.js`. Raising `GOLD` makes the digits harder to earn.
+
+**The cache's own name is translated too.** `cacheName` and
+`cacheNameLines` in `js/story.js` feed the badge's lower strip, the
+title-screen heading, the in-game top bar and the browser tab. The
+badge is drawn in the 3×5 bitmap font, which has no umlauts — keep a
+replacement name to plain A–Z, digits and basic punctuation.
 
 **The two units follow Kalibrierungsanlage canon:** R-3MI always speaks German
 and V-TGM always speaks English, whichever language the interface is set to.

@@ -206,8 +206,12 @@ window.LOGO = (function () {
     const tabW = 38;
     const nameW = tw - tabW - 3;
     plate(ctx, tx, by + 1, nameW, 12, 3);
-    ART.text(ctx, "LIEBE AUF DEN ERSTEN LOG",
-             tx + Math.round((nameW - ART.textWidth("LIEBE AUF DEN ERSTEN LOG", 1)) / 2),
+    /* The cache's own name, in whichever language the player is reading.
+       ART.text uppercases, and the bitmap font has no umlauts — keep any
+       replacement name to plain A-Z, digits and basic punctuation. */
+    const name = ui.cacheName;
+    ART.text(ctx, name,
+             tx + Math.round((nameW - ART.textWidth(name, 1)) / 2),
              by + 5, 1, C.ink);
     px(ctx, tx + 4, by + 4, 3, 6, C.red);
     px(ctx, tx + nameW - 7, by + 4, 3, 6, C.green);

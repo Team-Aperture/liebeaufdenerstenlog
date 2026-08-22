@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2b1630">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Liebe auf den ersten Log — ein zweisprachiges Pixel-Art-Datingspiel, das dir die Final-Koordinaten eines Geocaches verrät. A bilingual pixel-art dating sim that reveals a geocache's final coordinates.">
+  <meta name="description" content="Liebe auf den ersten Log / Love On The First Log — ein zweisprachiges Pixel-Art-Datingspiel, das dir die Final-Koordinaten eines Geocaches verrät. A bilingual pixel-art dating sim that reveals a geocache's final coordinates.">
   <title>Liebe auf den ersten Log</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>💗</text></svg>">
@@ -19,7 +19,7 @@
     <canvas id="titleCanvas" width="320" height="180" aria-hidden="true"></canvas>
     <div class="title-text">
       <p class="kicker" id="titleKicker"></p>
-      <h1>Liebe auf<br>den ersten Log</h1>
+      <h1 id="titleHeading">Liebe auf<br>den ersten Log</h1>
       <p id="titleSub" class="title-sub"></p>
       <p id="titleNeed" class="title-need"></p>
       <div class="title-actions">
@@ -39,7 +39,7 @@
     <div class="brand">
       <span class="brand-heart" aria-hidden="true">♥</span>
       <div>
-        <h1 class="brand-title">Liebe auf den ersten Log</h1>
+        <h1 class="brand-title" id="brandTitle">Liebe auf den ersten Log</h1>
         <p class="brand-sub" id="uiSubtitle"></p>
       </div>
     </div>
