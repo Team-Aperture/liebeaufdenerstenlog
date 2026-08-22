@@ -89,6 +89,9 @@ body {
 }
 .title-card canvas {
   display: block;
+  /* The facility's own black, so a canvas that has not painted yet can
+     never flash the card's cream through. */
+  background: #05080b;
   width: 100%;
   height: auto;
   aspect-ratio: 320 / 180;

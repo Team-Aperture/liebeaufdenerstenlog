@@ -66,8 +66,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v4"` to `-v5`,
-`-v6`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v5"` to `-v6`,
+`-v7`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
