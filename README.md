@@ -66,8 +66,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v3"` to `-v4`,
-`-v5`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v4"` to `-v5`,
+`-v6`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
@@ -105,6 +105,14 @@ answer:
   Petra says once that she never logs in ballpoint. Nando asks you not to grab
   him and to use the mirror. Mysti mentions twice how long her own puzzle took
   her — and then asks.
+
+**The answers are shuffled.** Each beat's options are ordered by a hash of its
+node id, so the correct one is as likely to be C or D as A — "always pick the
+top option" is not a strategy. The shuffle is deterministic, so every player
+sees the same order every time and a hint that says "it was C" stays true. The
+salt (`SHUFFLE_SALT` in `js/game.js`) was chosen by searching for the flattest
+spread: correct quiz answers land on A/B/C/D in a 1/2/2/2 split, and no two
+consecutive quizzes share a letter.
 
 A perfect run scores 14–15 affection and 10–12 log quality; passing needs 11 and
 9. That forgives roughly one bad answer and nothing more. The meters show a tick
@@ -196,6 +204,11 @@ cast entry, so a new character speaking a fixed language needs one field.
   works in the field where the signal does not
 - Keyboard, mouse and touch controls; `prefers-reduced-motion` respected;
   live regions for screen readers
+- **Built to run on a phone in a field.** The static half of every backdrop is
+  baked once into an offscreen canvas and blitted; sprite variants are
+  rasterised once and cached; limbs draw as spans rather than stamped discs;
+  and the soundtrack stops when the tab is hidden. Together that is roughly
+  60% fewer draw calls per frame than the naive version
 
 ---
 
