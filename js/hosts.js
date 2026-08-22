@@ -77,19 +77,37 @@ window.HOSTS = (function () {
     }
   }
 
-  /** A limb segment: a thick line with a rounded cap at each end. */
+  /**
+   * A limb segment: a thick line with a rounded cap at each end.
+   *
+   * Stamping a full disc at every step along the line costs about
+   * (length x width) fills. Walking the dominant axis and laying down
+   * one span per step, with a rounded cap only at the two ends, looks
+   * the same at these sizes for roughly a quarter of the work — and
+   * these two are on screen in every single scene.
+   */
   function bone(ctx, x0, y0, x1, y1, w, c) {
-    const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+    const dx = x1 - x0, dy = y1 - y0;
     const r = w / 2;
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      disc(ctx, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r, c);
+    const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))));
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        px(ctx, x0 + dx * t - r, y0 + dy * t, w, 1, c);
+      }
+    } else {
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        px(ctx, x0 + dx * t, y0 + dy * t - r, 1, w, c);
+      }
     }
+    disc(ctx, x0, y0, r, c);
+    disc(ctx, x1, y1, r, c);
   }
 
   /** The coiled feed line from the tank over the shoulder. */
   function coil(ctx, x0, y0, x1, y1, turns, amp, c) {
-    const steps = 46;
+    const steps = 24;
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
       /* arc from tank to collar, with a spring wound around it */

@@ -11,7 +11,7 @@
  * ===================================================================== */
 "use strict";
 
-const CACHE = "liebe-auf-den-ersten-log-v3";
+const CACHE = "liebe-auf-den-ersten-log-v4";
 
 const ASSETS = [
   "./",

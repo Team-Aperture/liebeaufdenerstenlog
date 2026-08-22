@@ -173,7 +173,7 @@
     /* backdrop for the badge */
     SCENES.render(tctx, "title", { time: clock });
     const p = titlePhase === "logo" ? Math.min(1, titleClock / 1.1) : 1;
-    LOGO.draw(tctx, ART.VIEW_W / 2, 58, clock, p, ui);
+    LOGO.draw(tctx, ART.VIEW_W / 2, 46, clock, p, ui);
 
     /* the cast lines up under the plate */
     const reveal = titlePhase === "logo" ? Math.max(0, (titleClock - 0.7) / 0.8) : 1;
@@ -181,9 +181,9 @@
       tctx.save();
       tctx.globalAlpha = Math.min(1, reveal);
       const lift = Math.round((1 - Math.min(1, reveal)) * 14);
-      ART.sprite(tctx, "petra", 96, 108 + lift, { scale: 3, blink: (clock * 1000) % 3400 < 120 });
-      ART.sprite(tctx, "nando", 148, 132 + lift, { scale: 2, blink: (clock * 1000 + 900) % 3400 < 120 });
-      ART.sprite(tctx, "mysti", 186, 108 + lift, { scale: 3, blink: (clock * 1000 + 1800) % 3400 < 120 });
+      ART.sprite(tctx, "petra", 92, 100 + lift, { scale: 3, blink: (clock * 1000) % 3400 < 120 });
+      ART.sprite(tctx, "nando", 146, 124 + lift, { scale: 2, blink: (clock * 1000 + 900) % 3400 < 120 });
+      ART.sprite(tctx, "mysti", 184, 100 + lift, { scale: 3, blink: (clock * 1000 + 1800) % 3400 < 120 });
       HOSTS.draw(tctx, "r3mi", 24, 180 + lift, 2, { t: clock });
       HOSTS.draw(tctx, "vtgm", 248, 182 + lift, 2, { t: clock });
       tctx.restore();
@@ -267,6 +267,42 @@
     b.addEventListener("click", () => { sfx("select"); onClick(); });
     box.appendChild(b);
     return b;
+  }
+
+  /* ------------------------------------------------------------------
+   * Answer order
+   *
+   * Authored first, correct first — which made "always pick the top
+   * option" a winning strategy. Each beat's answers are shuffled by a
+   * hash of its node id instead: scattered across A/B/C/D, but stable,
+   * so every player sees the same order every time and a hint that says
+   * "it was C" stays true.
+   * ------------------------------------------------------------------ */
+  /* Chosen by searching salts for the flattest spread of correct answers
+   * across the options, with no two consecutive quizzes sharing a letter.
+   * Quiz answers land A/B/C/D = 1/2/2/2; best answers on the three-option
+   * beats land A/B/C = 3/4/4. */
+  const SHUFFLE_SALT = "sektor12-43/";
+
+  function hash32(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function orderedChoices(nodeId, choices) {
+    if (!choices || choices.length < 2) return choices || [];
+    const arr = choices.slice();
+    let seed = hash32(SHUFFLE_SALT + nodeId) || 1;
+    for (let i = arr.length - 1; i > 0; i--) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      const j = seed % (i + 1);
+      const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
   }
 
   /* ------------------------------------------------------------------
@@ -424,7 +460,8 @@
     say(L.spoken, L.sub, () => {
       clearChoices();
       if (node.choices) {
-        node.choices.forEach((c) => addChoice(tr(c.t), null, () => applyChoice(c, node)));
+        orderedChoices(state.node, node.choices)
+          .forEach((c) => addChoice(tr(c.t), null, () => applyChoice(c, node)));
       } else if (node.end) {
         addChoice(t().continue, null, () => finishRoute(node.end), { key: "▸" });
       } else if (node.next) {
@@ -824,7 +861,13 @@
     $("uiSubtitle").textContent = s.sector;
     $("affLabel").textContent = s.affection;
     $("logLabel").textContent = s.logQuality;
+    /* Both language buttons show the language they switch TO. The title
+     * one was previously left at its hard-coded markup value. */
     $("langBtn").textContent = s.lang;
+    $("btnTitleLang").textContent = s.lang;
+    const switchTo = state.lang === "de" ? "English" : "Deutsch";
+    $("langBtn").setAttribute("aria-label", switchTo);
+    $("btnTitleLang").setAttribute("aria-label", switchTo);
     $("soundBtn").textContent = "♪ " + (state.sound ? s.on : s.off);
     $("soundBtn").setAttribute("aria-pressed", String(state.sound));
     $("soundBtn").title = s.music;
@@ -959,6 +1002,17 @@
   if (REDUCED) skipTitleIntro();
   else if (hasSave()) { titlePhase = "logo"; titleClock = 0; }
   requestAnimationFrame(loop);
+
+  /* A backgrounded tab still runs the audio scheduler even though
+   * requestAnimationFrame has stopped, which would quietly drain a
+   * phone in a pocket. Stop the music while hidden, resume on return. */
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      AUDIO.stopMusic(0.3);
+    } else if (state.sound) {
+      AUDIO.music(state.started ? (TRACK_FOR[view.scene] || "hub") : "title");
+    }
+  });
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
     window.addEventListener("load", () => {

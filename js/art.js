@@ -20,7 +20,6 @@ window.ART = (function () {
    * warmer and keeps the whole thing feeling like a love story.
    * ------------------------------------------------------------------ */
   const INK = "#2b1630";
-  const INK_SOFT = "#452441";
 
   /* ------------------------------------------------------------------
    * The cast. 16x24, drawn at scale 3 (Nando at 2 — he is a nano).
@@ -186,48 +185,6 @@ window.ART = (function () {
         C: "#9aa0ae", c: "#7c8290",
         P: "#5a5f6b", B: "#3a2b3f"
       }
-    },
-
-    /* ------------------------------------------------------------------
-     * The commentary drones. T4-TC is relentlessly positive and has
-     * heart-shaped optics. D-NF has logged 4,112 DNFs and shows it.
-     * ------------------------------------------------------------------ */
-    t4tc: {
-      w: 12, h: 12,
-      rows: [
-        "...oooooo...",
-        "..oCCCCCCo..",
-        ".oCCCCCCCCo.",
-        ".oCEoCCoECo.",
-        ".oCoEoEoECo.", /* heart-ish optics */
-        ".oCCoCCoCCo.",
-        ".oCCaaaaCCo.",
-        ".oCCCCCCCCo.",
-        "..oCCCCCCo..",
-        "...oaaaao...",
-        "....o..o....",
-        "...ao..oa..."
-      ],
-      pal: { o: INK, C: "#ff8ab5", c: "#e06a95", E: "#ffe9f2", a: "#ffd15c" }
-    },
-
-    dnf: {
-      w: 12, h: 12,
-      rows: [
-        "..oooooooo..",
-        ".oCCCCCCCCo.",
-        ".oCWWCCWWCo.",
-        ".oCEWCCWECo.",
-        ".oCCCCCCCCo.",
-        ".oCaaaaaaCo.",
-        ".oCCCCCCCCo.",
-        "..oCCCCCCo..",
-        "...oCCCCo...",
-        "....oCCo....",
-        "...ao..oa...",
-        "............"
-      ],
-      pal: { o: INK, C: "#79c6c0", W: "#eafcfa", E: "#2b1630", a: "#4a8f8a" }
     },
 
     /* ------------------------------------------------------------------
@@ -526,21 +483,26 @@ window.ART = (function () {
   }
 
   /**
-   * Draw a sprite grid.
-   * opts: { scale, flip, blink, talk, alpha, tint, silhouette }
+   * Sprite rendering.
+   *
+   * A 16x24 sprite at scale 3 is up to 384 separate fillRect calls, and
+   * with five or six characters on stage that dominated every frame.
+   * Each distinct variant is rasterised once into its own small canvas
+   * and blitted from then on — one drawImage instead of a few hundred
+   * fills. The variant set is tiny and bounded (a handful of sprites,
+   * two scales, flipped or not, blinking or not, mouth open or shut).
    */
-  function sprite(ctx, name, x, y, opts) {
-    const def = SPRITES[name];
-    if (!def) return;
-    const o = opts || {};
-    const scale = o.scale || 1;
-    const pal = def.pal;
-    const flip = !!o.flip;
+  const spriteCache = new Map();
+  const CACHE_LIMIT = 256;
 
-    if (o.alpha != null && o.alpha < 1) {
-      ctx.save();
-      ctx.globalAlpha = o.alpha;
-    }
+  function rasterise(def, o) {
+    const scale = o.scale;
+    const c = document.createElement("canvas");
+    c.width = def.w * scale;
+    c.height = def.h * scale;
+    const g = c.getContext("2d");
+    g.imageSmoothingEnabled = false;
+    const pal = def.pal;
 
     for (let row = 0; row < def.h; row++) {
       const line = def.rows[row] || "";
@@ -550,19 +512,49 @@ window.ART = (function () {
 
         /* Blinking: eyes become skin for a couple of frames. */
         if (o.blink && ch === "E") ch = pal.S ? "S" : ch;
-        /* Talking: the mouth opens on alternate frames. */
+        /* Talking: the mouth closes on alternate frames. */
         if (ch === "M" && o.talk === false) ch = pal.S ? "S" : ch;
 
         let color = pal[ch];
         if (!color) continue;
-        if (o.silhouette) color = o.silhouette;
 
-        const dx = flip ? def.w - 1 - col : col;
-        rect(ctx, x + dx * scale, y + row * scale, scale, scale, color);
+        const dx = o.flip ? def.w - 1 - col : col;
+        g.fillStyle = color;
+        g.fillRect(dx * scale, row * scale, scale, scale);
       }
     }
+    return c;
+  }
 
-    if (o.alpha != null && o.alpha < 1) ctx.restore();
+  /**
+   * Draw a sprite grid.
+   * opts: { scale, flip, blink, talk, alpha }
+   */
+  function sprite(ctx, name, x, y, opts) {
+    const def = SPRITES[name];
+    if (!def) return;
+    const o = opts || {};
+    const scale = o.scale || 1;
+    const variant = {
+      scale: scale,
+      flip: !!o.flip,
+      blink: !!o.blink,
+      talk: o.talk !== false
+    };
+    const key = name + "|" + scale + "|" + (variant.flip ? 1 : 0) + "|" +
+                (variant.blink ? 1 : 0) + "|" + (variant.talk ? 1 : 0);
+
+    let canvas = spriteCache.get(key);
+    if (!canvas) {
+      if (spriteCache.size >= CACHE_LIMIT) spriteCache.clear();
+      canvas = rasterise(def, variant);
+      spriteCache.set(key, canvas);
+    }
+
+    const fade = o.alpha != null && o.alpha < 1;
+    if (fade) { ctx.save(); ctx.globalAlpha = o.alpha; }
+    ctx.drawImage(canvas, Math.round(x), Math.round(y));
+    if (fade) ctx.restore();
   }
 
   /** A 5x5 pixel heart, the game's punctuation mark. */
@@ -650,7 +642,6 @@ window.ART = (function () {
     VIEW_W: VIEW_W,
     VIEW_H: VIEW_H,
     INK: INK,
-    INK_SOFT: INK_SOFT,
     sprites: SPRITES,
     rect: rect,
     sprite: sprite,

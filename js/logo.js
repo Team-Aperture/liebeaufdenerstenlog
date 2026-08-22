@@ -50,33 +50,54 @@ window.LOGO = (function () {
     ctx.restore();
   }
 
+  /**
+   * The inset of a clipped corner on row `i` of an `h`-tall panel with
+   * an `n`-pixel chamfer. Rows are drawn short rather than drawn full
+   * and then cleared — clearRect would punch a hole through whatever
+   * the badge is sitting on.
+   */
+  function chamfer(i, h, n) {
+    if (i < n) return n - i;
+    if (i >= h - n) return n - (h - 1 - i);
+    return 0;
+  }
+
   /** A brushed-metal panel with clipped corners and a bevelled rim. */
   function plate(ctx, x, y, w, h, notch) {
     const n = notch == null ? 4 : notch;
-    px(ctx, x, y, w, h, C.edge);
-    px(ctx, x + 1, y + 1, w - 2, h - 2, C.plateMid);
-    /* brushed banding */
-    for (let i = 2; i < h - 2; i++) {
+    for (let i = 0; i < h; i++) {
+      const c = chamfer(i, h, n);
+      const rowW = w - c * 2;
+      if (rowW <= 0) continue;
+      /* one pixel of edge on each side, brushed metal between */
+      px(ctx, x + c, y + i, rowW, 1, C.edge);
+      if (i === 0 || i === h - 1) continue;
       const k = i / h;
-      const c = k < 0.28 ? C.plateLite : (k < 0.42 ? C.plateHot : (k > 0.74 ? C.plateDark : C.plateMid));
-      px(ctx, x + 1, y + i, w - 2, 1, c);
+      const face = k < 0.28 ? C.plateLite
+                 : (k < 0.42 ? C.plateHot
+                 : (k > 0.74 ? C.plateDark : C.plateMid));
+      if (rowW > 2) px(ctx, x + c + 1, y + i, rowW - 2, 1, face);
     }
-    /* clipped corners */
-    for (let i = 0; i < n; i++) {
-      const len = n - i;
-      px(ctx, x, y + i, len, 1, "rgba(0,0,0,0)");
-      ctx.clearRect(x, y + i, len, 1);
-      ctx.clearRect(x + w - len, y + i, len, 1);
-      ctx.clearRect(x, y + h - 1 - i, len, 1);
-      ctx.clearRect(x + w - len, y + h - 1 - i, len, 1);
+  }
+
+  /** The dark inner field the lettering sits on. */
+  function body(ctx, x, y, w, h) {
+    const n = 6;
+    for (let i = 0; i < h; i++) {
+      const c = chamfer(i, h, n);
+      const rowW = w - c * 2;
+      if (rowW <= 0) continue;
+      px(ctx, x + c, y + i, rowW, 1, C.edge);
+      if (i === 0 || i === h - 1 || rowW <= 2) continue;
+      const k = i / h;
+      const face = k < 0.12 ? "#39424c"
+                 : (k > 0.86 ? "#12171c"
+                 : (k < 0.5 ? "#252d35" : "#1b2229"));
+      px(ctx, x + c + 1, y + i, rowW - 2, 1, face);
     }
-    /* re-draw the diagonal edge */
-    for (let i = 0; i < n; i++) {
-      px(ctx, x + n - i - 1, y + i, 1, 1, C.edge);
-      px(ctx, x + w - n + i, y + i, 1, 1, C.edge);
-      px(ctx, x + n - i - 1, y + h - 1 - i, 1, 1, C.edge);
-      px(ctx, x + w - n + i, y + h - 1 - i, 1, 1, C.edge);
-    }
+    /* bevelled rim across the straight part of the top and bottom */
+    px(ctx, x + n, y + 1, w - n * 2, 1, C.plateLite);
+    px(ctx, x + n, y + h - 2, w - n * 2, 1, "#0b0f13");
   }
 
   /** The calibration gauge: half red, half green, with a caliper needle. */
@@ -140,43 +161,63 @@ window.LOGO = (function () {
   function draw(ctx, cx, cy, t, p, ui) {
     const prog = Math.max(0, Math.min(1, p == null ? 1 : p));
     const ease = 1 - Math.pow(1 - prog, 3);
-    const W = 300, H = 96;
+
+    /* Long and low, like the real badge: one dominant word on a dark
+     * field, thin machined strips above and below, and the gauge sunk
+     * into the left end of the plate rather than floating beside it.
+     *
+     *   x0 .......... plate .......... x0+300
+     *      |--gauge--|---- text column ----|
+     */
+    const W = 300, H = 58;
     const x0 = Math.round(cx - W / 2);
     const y0 = Math.round(cy - H / 2);
+    const slide = Math.round((1 - ease) * 70);
 
     ctx.save();
     ctx.globalAlpha = Math.min(1, prog * 2);
 
-    /* ---- gauge, sliding in from the left ---- */
-    const gx = Math.round(x0 + 30 - (1 - ease) * 70);
-    gauge(ctx, gx, y0 + 48, 30, t);
+    /* ---- the plate ---- */
+    const px0 = x0 + 20 + slide;
+    const pw = 280;
+    body(ctx, px0, y0, pw, H);
 
-    /* ---- main plate, sliding in from the right ---- */
-    const bx = Math.round(x0 + 62 + (1 - ease) * 80);
+    /* the text column starts clear of the gauge */
+    const tx = px0 + 50;
+    const tw = pw - 56;
 
     /* motto strip */
-    plate(ctx, bx, y0 + 6, 236, 15, 3);
-    lamp(ctx, bx + 5, y0 + 11, t % 2 < 1.4, C.redHot);
-    lamp(ctx, bx + 224, y0 + 11, t % 2 >= 1.4, C.greenHot);
-    ART.text(ctx, ui.motto, bx + 34, y0 + 11, 1, C.ink);
+    plate(ctx, tx, y0 + 4, tw, 11, 3);
+    lamp(ctx, tx + 4, y0 + 7, t % 2 < 1.4, C.redHot);
+    lamp(ctx, tx + tw - 11, y0 + 7, t % 2 >= 1.4, C.greenHot);
+    ART.text(ctx, ui.motto, tx + Math.round((tw - ART.textWidth(ui.motto, 1)) / 2),
+             y0 + 7, 1, C.ink);
 
-    /* the name */
-    chrome(ctx, ui.facility, bx + 6, y0 + 27, 2);
+    /* "DIE", small, with a hairline running off to the right */
+    chrome(ctx, "DIE", tx, y0 + 18, 1, "#ffffff");
+    px(ctx, tx + 16, y0 + 20, tw - 16, 1, C.red);
 
-    /* the sector plate */
-    plate(ctx, bx, y0 + 50, 236, 20, 3);
-    ART.text(ctx, "LIEBE AUF DEN ERSTEN LOG", bx + 22, y0 + 57, 1, C.ink);
-    px(ctx, bx + 14, y0 + 56, 3, 7, C.red);
-    px(ctx, bx + 219, y0 + 56, 3, 7, C.green);
+    /* the hero word */
+    chrome(ctx, "KALIBRIERUNGSANLAGE", tx, y0 + 26, 3);
 
-    /* footer bar and certification tab */
-    px(ctx, bx, y0 + 72, 236, 13, C.edge);
-    px(ctx, bx + 1, y0 + 73, 234, 11, "#141a20");
-    px(ctx, bx + 1, y0 + 73, 234, 1, "#232c35");
-    ART.text(ctx, ui.sector, bx + 6, y0 + 76, 1, "#8fb0c4");
-    plate(ctx, bx + 198, y0 + 70, 38, 17, 2);
-    ART.text(ctx, "ZERT", bx + 202, y0 + 72, 1, C.ink);
-    ART.text(ctx, "7C", bx + 210, y0 + 79, 1, C.red);
+    /* bottom strip: this cache's own name, and the sector tab */
+    const by = y0 + 44;
+    px(ctx, tx, by - 1, tw, 1, C.green);
+    const tabW = 38;
+    const nameW = tw - tabW - 3;
+    plate(ctx, tx, by + 1, nameW, 12, 3);
+    ART.text(ctx, "LIEBE AUF DEN ERSTEN LOG",
+             tx + Math.round((nameW - ART.textWidth("LIEBE AUF DEN ERSTEN LOG", 1)) / 2),
+             by + 5, 1, C.ink);
+    px(ctx, tx + 4, by + 4, 3, 6, C.red);
+    px(ctx, tx + nameW - 7, by + 4, 3, 6, C.green);
+
+    plate(ctx, tx + tw - tabW, by, tabW, 14, 2);
+    ART.text(ctx, "SEKTOR", tx + tw - tabW + 3, by + 2, 1, C.ink);
+    ART.text(ctx, "12", tx + tw - tabW + 14, by + 8, 1, C.red);
+
+    /* ---- the gauge, sunk into the left end ---- */
+    gauge(ctx, px0 + 22, y0 + 29, 25, t);
 
     /* ---- one glint sweeping across on assembly ---- */
     if (prog > 0.55 && prog < 1) {
@@ -184,7 +225,7 @@ window.LOGO = (function () {
       const sx = x0 - 40 + k * (W + 80);
       ctx.save();
       ctx.globalAlpha = 0.5 * (1 - Math.abs(k - 0.5) * 2);
-      for (let i = 0; i < 18; i++) {
+      for (let i = 0; i < 14; i++) {
         px(ctx, sx + i, y0 - 4 + i * 0.4, 2, H + 8, "#ffffff");
       }
       ctx.restore();

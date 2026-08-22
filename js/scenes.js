@@ -323,238 +323,263 @@ window.SCENES = (function () {
    * Backdrops
    * ------------------------------------------------------------------ */
 
-  function drawEvent(ctx, t) {
-    sky(ctx, [[0, "#7ec8e8"], [44, "#a3dcee"], [86, "#cdeef5"]]);
-    cloud(ctx, wrap(t * 5, W + 120) - 60, 16, 2, "#ffffff");
-    cloud(ctx, wrap(t * 3.2 + 180, W + 120) - 60, 38, 1, "#f2fbff");
-    cloud(ctx, wrap(t * 4.1 + 90, W + 120) - 60, 26, 1, "#ffffff");
+  /* ------------------------------------------------------------------
+   * Backdrops
+   *
+   * Each one is split in two. The static half — sky, hills, skylines,
+   * buildings, trees — is painted once into an offscreen canvas and
+   * blitted every frame; only the moving half is redrawn. A city
+   * skyline alone is several hundred fillRects, and repainting all of
+   * that sixty times a second is the difference between a phone that
+   * lasts a cache round and one that does not.
+   * ------------------------------------------------------------------ */
 
-    /* rolling hills */
-    for (let x = 0; x < W; x++) {
-      const h = 104 + Math.sin(x * 0.03) * 6 + Math.sin(x * 0.011) * 4;
-      ART.rect(ctx, x, h, 1, GROUND - h, "#6aa85f");
-    }
-    band(ctx, GROUND, H, "#5b9a52");
-    dither(ctx, GROUND, "#6aa85f", 2);
-    /* trodden event path */
-    ART.rect(ctx, 0, 158, W, 22, "#b79a68");
-    dither(ctx, 158, "#5b9a52", 2);
+  const STATIC = {
+    event: function (ctx) {
+      sky(ctx, [[0, "#7ec8e8"], [44, "#a3dcee"], [86, "#cdeef5"]]);
+      for (let x = 0; x < W; x++) {
+        const h = 104 + Math.sin(x * 0.03) * 6 + Math.sin(x * 0.011) * 4;
+        ART.rect(ctx, x, h, 1, GROUND - h, "#6aa85f");
+      }
+      band(ctx, GROUND, H, "#5b9a52");
+      dither(ctx, GROUND, "#6aa85f", 2);
+      ART.rect(ctx, 0, 158, W, 22, "#b79a68");
+      dither(ctx, 158, "#5b9a52", 2);
+      ART.sprite(ctx, "tent", 12, 92, { scale: 2 });
+      ART.sprite(ctx, "pine", 246, 82, { scale: 2 });
+      ART.sprite(ctx, "bush", 214, 128, { scale: 1 });
+      ART.sprite(ctx, "bush", 118, 132, { scale: 1 });
+    },
 
-    ART.sprite(ctx, "tent", 12, 92, { scale: 2 });
-    ART.sprite(ctx, "pine", 246, 82, { scale: 2 });
-    ART.sprite(ctx, "bush", 214, 128, { scale: 1 });
-    ART.sprite(ctx, "bush", 118, 132, { scale: 1 });
-
-    /* bunting, swinging gently */
-    for (let i = 0; i < 14; i++) {
-      const x = 80 + i * 14;
-      const y = 60 + Math.sin(i * 0.8) * 4 + Math.sin(t * 1.6 + i * 0.5) * 1;
-      ART.rect(ctx, x, y, 12, 1, "#4a2c46");
-      ART.heart(ctx, x + 3, y + 2, 1, i % 2 ? "#ff8ab5" : "#ffd15c");
-    }
-  }
-
-  function drawForest(ctx, t, weather) {
-    sky(ctx, [[0, "#8fd0dd"], [40, "#b6e2e2"], [80, "#d8f0e4"]]);
-
-    /* Two receding walls of conifers. Each tree is a stepped triangle,
-     * which reads as a treeline rather than as a picket fence. */
-    function treeline(x0, spacing, topBase, jitter, halfWidth, color) {
-      for (let x = x0; x < W + spacing; x += spacing) {
-        const top = topBase + ((x * 7) % jitter);
-        for (let y = top; y < GROUND; y += 2) {
-          const grow = Math.min(halfWidth, ((y - top) / 2) + 1);
-          ART.rect(ctx, x - grow, y, grow * 2, 2, color);
+    forest: function (ctx) {
+      sky(ctx, [[0, "#8fd0dd"], [40, "#b6e2e2"], [80, "#d8f0e4"]]);
+      /* Two receding walls of conifers. Each tree is a stepped triangle,
+       * which reads as a treeline rather than as a picket fence. */
+      function treeline(x0, spacing, topBase, jitter, halfWidth, color) {
+        for (let x = x0; x < W + spacing; x += spacing) {
+          const top = topBase + ((x * 7) % jitter);
+          for (let y = top; y < GROUND; y += 2) {
+            const grow = Math.min(halfWidth, ((y - top) / 2) + 1);
+            ART.rect(ctx, x - grow, y, grow * 2, 2, color);
+          }
         }
       }
-    }
-    treeline(-6, 13, 60, 11, 7, "#2a5f45");
-    treeline(-12, 19, 76, 9, 10, "#356f4e");
-    band(ctx, GROUND, H, "#41894f");
-    dither(ctx, GROUND, "#356f4e", 2);
-    ART.rect(ctx, 0, 162, W, 18, "#347042");
+      treeline(-6, 13, 60, 11, 7, "#2a5f45");
+      treeline(-12, 19, 76, 9, 10, "#356f4e");
+      band(ctx, GROUND, H, "#41894f");
+      dither(ctx, GROUND, "#356f4e", 2);
+      ART.rect(ctx, 0, 162, W, 18, "#347042");
+      ART.sprite(ctx, "oak", 8, 66, { scale: 2 });
+      ART.sprite(ctx, "pine", 268, 74, { scale: 2 });
+      ART.sprite(ctx, "pine", 234, 96, { scale: 1 });
+      ART.sprite(ctx, "bush", 96, 140, { scale: 1 });
+      ART.sprite(ctx, "bush", 190, 144, { scale: 1 });
+    },
 
-    const sway = Math.sin(t * 1.1) * 1;
-    ART.sprite(ctx, "oak", 8 + sway, 66, { scale: 2 });
-    ART.sprite(ctx, "pine", 268 - sway, 74, { scale: 2 });
-    ART.sprite(ctx, "pine", 234, 96, { scale: 1 });
-    ART.sprite(ctx, "bush", 96, 140, { scale: 1 });
-    ART.sprite(ctx, "bush", 190, 144, { scale: 1 });
-
-    /* shafts of light through the canopy */
-    ctx.save();
-    ctx.globalAlpha = 0.09 + Math.sin(t * 0.7) * 0.02;
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.moveTo(40 + i * 70, 0);
-      ctx.lineTo(64 + i * 70, 0);
-      ctx.lineTo(40 + i * 70, GROUND);
-      ctx.lineTo(24 + i * 70, GROUND);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    if (weather === "rain") {
-      ctx.save();
-      ctx.globalAlpha = 0.25;
-      band(ctx, 0, H, "#2f4a63");
-      ctx.restore();
-      rain(ctx, t, 80);
-    } else {
-      leaves(ctx, t);
-      motes(ctx, t, "#fff4cf");
-    }
-  }
-
-  function drawCity(ctx, t) {
-    sky(ctx, [[0, "#2b2140"], [40, "#4a2f52"], [78, "#7a4361"]]);
-    stars(ctx, t);
-
-    /* skyline, two parallax layers */
-    for (let x = -20; x < W + 20; x += 34) {
-      const h = 58 + ((x * 13) % 26);
-      ART.rect(ctx, x, h, 30, GROUND - h, "#3a2b4d");
-      for (let wy = h + 6; wy < GROUND - 6; wy += 9) {
-        for (let wx = x + 4; wx < x + 26; wx += 8) {
-          const lit = ((wx * 7 + wy * 13) % 11) > 5;
-          const flick = ((wx + wy) % 17 === 0) && Math.sin(t * 4) > 0;
-          ART.rect(ctx, wx, wy, 3, 4, lit || flick ? "#ffd98f" : "#2c2039");
+    city: function (ctx) {
+      sky(ctx, [[0, "#2b2140"], [40, "#4a2f52"], [78, "#7a4361"]]);
+      /* Windows that flicker are noted here and repainted per frame;
+       * the other few hundred are baked. */
+      const flickers = [];
+      for (let x = -20; x < W + 20; x += 34) {
+        const h = 58 + ((x * 13) % 26);
+        ART.rect(ctx, x, h, 30, GROUND - h, "#3a2b4d");
+        for (let wy = h + 6; wy < GROUND - 6; wy += 9) {
+          for (let wx = x + 4; wx < x + 26; wx += 8) {
+            const lit = ((wx * 7 + wy * 13) % 11) > 5;
+            ART.rect(ctx, wx, wy, 3, 4, lit ? "#ffd98f" : "#2c2039");
+            if (!lit && (wx + wy) % 17 === 0) flickers.push([wx, wy]);
+          }
         }
       }
-    }
-    for (let x = -14; x < W + 20; x += 46) {
-      const h = 86 + ((x * 7) % 14);
-      ART.rect(ctx, x, h, 40, GROUND - h, "#4b3960");
-      for (let wy = h + 6; wy < GROUND - 4; wy += 10) {
-        for (let wx = x + 5; wx < x + 34; wx += 9) {
-          ART.rect(ctx, wx, wy, 4, 5, ((wx * 3 + wy) % 7) > 3 ? "#ffe6ad" : "#3a2b4d");
+      for (let x = -14; x < W + 20; x += 46) {
+        const h = 86 + ((x * 7) % 14);
+        ART.rect(ctx, x, h, 40, GROUND - h, "#4b3960");
+        for (let wy = h + 6; wy < GROUND - 4; wy += 10) {
+          for (let wx = x + 5; wx < x + 34; wx += 9) {
+            ART.rect(ctx, wx, wy, 4, 5, ((wx * 3 + wy) % 7) > 3 ? "#ffe6ad" : "#3a2b4d");
+          }
         }
       }
+      band(ctx, GROUND, H, "#4f4a58");
+      dither(ctx, GROUND, "#4b3960", 2);
+      ART.rect(ctx, 0, 158, W, 22, "#3f3a49");
+      for (let x = 4; x < W; x += 16) ART.rect(ctx, x, 158, 10, 1, "#59535f");
+      ART.sprite(ctx, "lamppost", 44, 88, { scale: 1 });
+      ART.sprite(ctx, "lamppost", 262, 88, { scale: 1 });
+      ART.sprite(ctx, "signpost", 148, 96, { scale: 1 });
+      return { flickers: flickers };
+    },
+
+    ruins: function (ctx) {
+      sky(ctx, [[0, "#43305f"], [34, "#7e4a6a"], [66, "#c4707a"], [96, "#e9a173"]]);
+      sun(ctx, 238, 100, 20, "#ffd88a", "#c4707a", 2);
+      for (let x = 0; x < W; x++) {
+        const h = 112 + Math.sin(x * 0.02 + 1.2) * 7;
+        ART.rect(ctx, x, h, 1, GROUND - h, "#5b4470");
+      }
+      band(ctx, GROUND, H, "#4a3a5e");
+      dither(ctx, GROUND, "#5b4470", 2);
+      ART.rect(ctx, 0, 164, W, 16, "#3e3050");
+      ruinWall(ctx, 244, GROUND + 20, 72, 74);
+      ruinWall(ctx, 112, GROUND + 12, 44, 30);
+      ART.sprite(ctx, "pine", 6, 90, { scale: 2 });
+      ART.sprite(ctx, "bush", 176, 146, { scale: 1 });
+      ART.sprite(ctx, "bush", 84, 150, { scale: 1 });
+    },
+
+    finale: function (ctx) {
+      sky(ctx, [[0, "#3a2258"], [26, "#8b3c74"], [56, "#d95f7d"], [88, "#ffab77"]]);
+      sun(ctx, 160, 104, 30, "#ffe28f", "#d95f7d", 4);
+      for (let x = 0; x < W; x++) {
+        const h = 116 + Math.sin(x * 0.017 + 0.4) * 8;
+        ART.rect(ctx, x, h, 1, GROUND - h, "#6b3b63");
+      }
+      band(ctx, GROUND, H, "#4b2b4d");
+      dither(ctx, GROUND, "#6b3b63", 2);
+      ART.rect(ctx, 0, 164, W, 16, "#3d2340");
+      ART.sprite(ctx, "pine", 4, 92, { scale: 2 });
+      ART.sprite(ctx, "pine", 288, 96, { scale: 2 });
+    },
+
+    title: function (ctx) {
+      sky(ctx, [[0, "#33174a"], [30, "#6d2a63"], [62, "#b23f70"], [92, "#e86a86"]]);
+      sun(ctx, 160, 96, 34, "#ffd98f", "#b23f70", -14);
+      for (let x = 0; x < W; x++) {
+        const h = 124 + Math.sin(x * 0.02) * 5;
+        ART.rect(ctx, x, h, 1, H - h, "#3b1d43");
+      }
+      /* grid floor running to the horizon */
+      for (let i = 1; i < 9; i++) {
+        const y = 130 + i * i * 0.8;
+        ART.rect(ctx, 0, y, W, 1, "#7a3a6b");
+      }
+      for (let i = -8; i <= 8; i++) {
+        ctx.strokeStyle = "#7a3a6b";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + i * 6, 130);
+        ctx.lineTo(W / 2 + i * 40, H);
+        ctx.stroke();
+      }
     }
-
-    /* pavement */
-    band(ctx, GROUND, H, "#4f4a58");
-    dither(ctx, GROUND, "#4b3960", 2);
-    ART.rect(ctx, 0, 158, W, 22, "#3f3a49");
-    for (let x = 4; x < W; x += 16) ART.rect(ctx, x, 158, 10, 1, "#59535f");
-
-    ART.sprite(ctx, "lamppost", 44, 88, { scale: 1 });
-    ART.sprite(ctx, "lamppost", 262, 88, { scale: 1 });
-    ART.sprite(ctx, "signpost", 148, 96, { scale: 1 });
-
-    /* pools of lamplight */
-    ctx.save();
-    ctx.globalAlpha = 0.14 + Math.sin(t * 5.5) * 0.015;
-    ctx.fillStyle = "#ffe9a8";
-    for (const lx of [49, 267]) {
-      ctx.beginPath();
-      ctx.moveTo(lx, 92);
-      ctx.lineTo(lx + 26, GROUND + 24);
-      ctx.lineTo(lx - 26, GROUND + 24);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function drawRuins(ctx, t) {
-    sky(ctx, [[0, "#43305f"], [34, "#7e4a6a"], [66, "#c4707a"], [96, "#e9a173"]]);
-    /* the sun, sinking */
-    sun(ctx, 238, 100 + Math.round(Math.sin(t * 0.2)), 20, "#ffd88a", "#c4707a", 2);
-
-    /* hills */
-    for (let x = 0; x < W; x++) {
-      const h = 112 + Math.sin(x * 0.02 + 1.2) * 7;
-      ART.rect(ctx, x, h, 1, GROUND - h, "#5b4470");
-    }
-    band(ctx, GROUND, H, "#4a3a5e");
-    dither(ctx, GROUND, "#5b4470", 2);
-    ART.rect(ctx, 0, 164, W, 16, "#3e3050");
-
-    ruinWall(ctx, 244, GROUND + 20, 72, 74);
-    ruinWall(ctx, 112, GROUND + 12, 44, 30);
-    ART.sprite(ctx, "pine", 6, 90, { scale: 2 });
-    ART.sprite(ctx, "bush", 176, 146, { scale: 1 });
-    ART.sprite(ctx, "bush", 84, 150, { scale: 1 });
-
-    fireflies(ctx, t);
-
-    /* bats, because a ruin without bats is just masonry */
-    for (let i = 0; i < 3; i++) {
-      const x = wrap(t * 22 + i * 110, W + 40) - 20;
-      const y = 34 + Math.sin(t * 3 + i * 2) * 8;
-      const flap = Math.sin(t * 14 + i) > 0 ? 1 : 0;
-      ART.rect(ctx, x, y, 2, 1, "#2b1630");
-      ART.rect(ctx, x - 2, y - flap, 2, 1, "#2b1630");
-      ART.rect(ctx, x + 2, y - flap, 2, 1, "#2b1630");
-    }
-  }
-
-  function drawFinale(ctx, t) {
-    sky(ctx, [[0, "#3a2258"], [26, "#8b3c74"], [56, "#d95f7d"], [88, "#ffab77"]]);
-
-    sun(ctx, 160, 104, 30, "#ffe28f", "#d95f7d", 4);
-
-    for (let x = 0; x < W; x++) {
-      const h = 116 + Math.sin(x * 0.017 + 0.4) * 8;
-      ART.rect(ctx, x, h, 1, GROUND - h, "#6b3b63");
-    }
-    band(ctx, GROUND, H, "#4b2b4d");
-    dither(ctx, GROUND, "#6b3b63", 2);
-    ART.rect(ctx, 0, 164, W, 16, "#3d2340");
-
-    ART.sprite(ctx, "pine", 4, 92, { scale: 2 });
-    ART.sprite(ctx, "pine", 288, 96, { scale: 2 });
-
-    /* drifting hearts, always */
-    for (let i = 0; i < 10; i++) {
-      const seed = i * 41.3;
-      const x = wrap(seed * 7.7 + Math.sin(t * 0.8 + i) * 12, W);
-      const y = wrap(seed * 5.3 - t * 11, H - 40) + 8;
-      ART.heart(ctx, x, y, i % 3 === 0 ? 2 : 1, i % 2 ? "#ffc2d6" : "#ff8ab5");
-    }
-  }
-
-  function drawTitle(ctx, t) {
-    sky(ctx, [[0, "#33174a"], [30, "#6d2a63"], [62, "#b23f70"], [92, "#e86a86"]]);
-    stars(ctx, t);
-    sun(ctx, 160, 96, 34, "#ffd98f", "#b23f70", -14);
-    for (let x = 0; x < W; x++) {
-      const h = 124 + Math.sin(x * 0.02) * 5;
-      ART.rect(ctx, x, h, 1, H - h, "#3b1d43");
-    }
-    /* grid floor running to the horizon */
-    for (let i = 1; i < 9; i++) {
-      const y = 130 + i * i * 0.8;
-      ART.rect(ctx, 0, y, W, 1, "#7a3a6b");
-    }
-    for (let i = -8; i <= 8; i++) {
-      const x0 = W / 2 + i * 6;
-      const x1 = W / 2 + i * 40;
-      ctx.strokeStyle = "#7a3a6b";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x0, 130);
-      ctx.lineTo(x1, H);
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < 8; i++) {
-      const seed = i * 61.7;
-      const x = wrap(seed * 9.1 + Math.sin(t + i) * 9, W);
-      const y = wrap(seed * 3.7 - t * 8, 120) + 6;
-      ART.heart(ctx, x, y, i % 3 === 0 ? 2 : 1, "#ff8ab5");
-    }
-  }
-
-  const BACKDROPS = {
-    title: drawTitle,
-    event: drawEvent,
-    forest: drawForest,
-    city: drawCity,
-    ruins: drawRuins,
-    finale: drawFinale
   };
+
+  const DYNAMIC = {
+    event: function (ctx, t) {
+      cloud(ctx, wrap(t * 5, W + 120) - 60, 16, 2, "#ffffff");
+      cloud(ctx, wrap(t * 3.2 + 180, W + 120) - 60, 38, 1, "#f2fbff");
+      cloud(ctx, wrap(t * 4.1 + 90, W + 120) - 60, 26, 1, "#ffffff");
+      for (let i = 0; i < 14; i++) {
+        const x = 80 + i * 14;
+        const y = 60 + Math.sin(i * 0.8) * 4 + Math.sin(t * 1.6 + i * 0.5) * 1;
+        ART.rect(ctx, x, y, 12, 1, "#4a2c46");
+        ART.heart(ctx, x + 3, y + 2, 1, i % 2 ? "#ff8ab5" : "#ffd15c");
+      }
+    },
+
+    forest: function (ctx, t, weather) {
+      /* shafts of light through the canopy */
+      ctx.save();
+      ctx.globalAlpha = 0.09 + Math.sin(t * 0.7) * 0.02;
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(40 + i * 70, 0);
+        ctx.lineTo(64 + i * 70, 0);
+        ctx.lineTo(40 + i * 70, GROUND);
+        ctx.lineTo(24 + i * 70, GROUND);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      if (weather === "rain") {
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        band(ctx, 0, H, "#2f4a63");
+        ctx.restore();
+        rain(ctx, t, 80);
+      } else {
+        leaves(ctx, t);
+        motes(ctx, t, "#fff4cf");
+      }
+    },
+
+    city: function (ctx, t, weather, extra) {
+      stars(ctx, t);
+      if (extra && Math.sin(t * 4) > 0) {
+        for (const [wx, wy] of extra.flickers) {
+          ART.rect(ctx, wx, wy, 3, 4, "#ffd98f");
+        }
+      }
+      /* pools of lamplight */
+      ctx.save();
+      ctx.globalAlpha = 0.14 + Math.sin(t * 5.5) * 0.015;
+      ctx.fillStyle = "#ffe9a8";
+      for (const lx of [49, 267]) {
+        ctx.beginPath();
+        ctx.moveTo(lx, 92);
+        ctx.lineTo(lx + 26, GROUND + 24);
+        ctx.lineTo(lx - 26, GROUND + 24);
+        ctx.fill();
+      }
+      ctx.restore();
+    },
+
+    ruins: function (ctx, t) {
+      fireflies(ctx, t);
+      /* bats, because a ruin without bats is just masonry */
+      for (let i = 0; i < 3; i++) {
+        const x = wrap(t * 22 + i * 110, W + 40) - 20;
+        const y = 34 + Math.sin(t * 3 + i * 2) * 8;
+        const flap = Math.sin(t * 14 + i) > 0 ? 1 : 0;
+        ART.rect(ctx, x, y, 2, 1, "#2b1630");
+        ART.rect(ctx, x - 2, y - flap, 2, 1, "#2b1630");
+        ART.rect(ctx, x + 2, y - flap, 2, 1, "#2b1630");
+      }
+    },
+
+    finale: function (ctx, t) {
+      for (let i = 0; i < 10; i++) {
+        const seed = i * 41.3;
+        const x = wrap(seed * 7.7 + Math.sin(t * 0.8 + i) * 12, W);
+        const y = wrap(seed * 5.3 - t * 11, H - 40) + 8;
+        ART.heart(ctx, x, y, i % 3 === 0 ? 2 : 1, i % 2 ? "#ffc2d6" : "#ff8ab5");
+      }
+    },
+
+    title: function (ctx, t) {
+      stars(ctx, t);
+      for (let i = 0; i < 8; i++) {
+        const seed = i * 61.7;
+        const x = wrap(seed * 9.1 + Math.sin(t + i) * 9, W);
+        const y = wrap(seed * 3.7 - t * 8, 120) + 6;
+        ART.heart(ctx, x, y, i % 3 === 0 ? 2 : 1, "#ff8ab5");
+      }
+    }
+  };
+
+  /* Baked static layers, built on first use and kept for the session. */
+  const baked = {};
+
+  function bakedLayer(scene) {
+    if (baked[scene]) return baked[scene];
+    const c = document.createElement("canvas");
+    c.width = W;
+    c.height = H;
+    const g = c.getContext("2d");
+    g.imageSmoothingEnabled = false;
+    const extra = STATIC[scene](g) || null;
+    baked[scene] = { canvas: c, extra: extra };
+    return baked[scene];
+  }
+
+  function backdrop(ctx, scene, t, weather) {
+    const key = STATIC[scene] ? scene : "event";
+    const layer = bakedLayer(key);
+    ctx.drawImage(layer.canvas, 0, 0);
+    DYNAMIC[key](ctx, t, weather, layer.extra);
+  }
 
   /* ------------------------------------------------------------------
    * Actors: who stands where, in which scene.
@@ -762,7 +787,7 @@ window.SCENES = (function () {
       );
     }
 
-    (BACKDROPS[scene] || drawEvent)(ctx, t, o.weather);
+    backdrop(ctx, scene, t, o.weather);
 
     const stage = STAGE[scene];
     if (stage) {
