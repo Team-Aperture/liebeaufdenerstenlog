@@ -1,18 +1,24 @@
 # Liebe auf den ersten Log 💗🧭
 
+### DIE KALIBRIERUNGSANLAGE — Sektor 12: Emotionale Verträglichkeit
+*TESTEN. MESSEN. VERLIEBEN.*
+
 **Ein zweisprachiges Geocaching-Datingspiel, das die Final-Koordinaten verrät.**
 **A bilingual geocaching dating sim that hands the solver the final coordinates.**
 
-Three dates. Ten digits. One container.
+Three assessments. Ten digits. One container.
 
-You are at a mega-event with two commentary drones — **T4-TC**, who thinks
-everything is wonderful, and **D-NF**, who has logged 4,112 did-not-finds and
-zero relationships. Three caches want to go out with you. Each date that goes
-*really* well releases part of the final coordinates onto your GPSr. All three,
-and it locks on.
+Sector 12 of the facility has come back online, and it would like to measure
+your emotional compatibility. Running the tests are the two mobile units:
+**R-3MI**, who is delighted about everything and speaks German, and **V-TGM**,
+who has opinions and speaks English. Three test subjects — three caches — are
+waiting. Every assessment you *pass* releases part of the final coordinates onto
+your GPSr. All three, and it locks on.
 
-No frameworks, no build step, no dependencies, no external assets. Open
-`index.html` and it runs — including from `file://` on a phone with no signal.
+No frameworks, no build step, no dependencies, no external assets, and not a
+single image or audio file: the art is drawn pixel by pixel in code and the
+soundtrack is synthesised by a chiptune tracker at runtime. Open `index.html`
+and it runs — including from `file://` on a phone with no signal.
 
 ---
 
@@ -24,10 +30,14 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. Or just double-click `index.html`.
 
-**Controls.** Tap an answer, or press <kbd>1</kbd>–<kbd>3</kbd>.
-<kbd>Enter</kbd> / <kbd>Space</kbd> advances and skips the typewriter.
-Language, sound and restart live in the top bar. Progress is saved in
-`localStorage` on the player's own device.
+**Controls.** Tap an answer, or press <kbd>1</kbd>–<kbd>4</kbd>.
+<kbd>Enter</kbd> / <kbd>Space</kbd> advances and skips the typewriter. Tap
+anywhere on the title screen to skip the cold-start sequence. Language, sound
+and restart live in the top bar. Progress is saved in `localStorage` on the
+player's own device.
+
+**Sound is off until you turn it on** — browsers require a gesture before audio
+may start, and nobody wants a geocaching page playing music at them unasked.
 
 ---
 
@@ -56,8 +66,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, change `const CACHE = "liebe-auf-den-ersten-log-v2"` to `-v3`,
-`-v4`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v3"` to `-v4`,
+`-v5`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
@@ -75,19 +85,35 @@ The ten unknown digits of the final are labelled **A** through **J**:
 N dd° AB.CDE     E ddd° FG.HIJ
 ```
 
-| Date | Releases | Digits |
-|------|----------|--------|
+| Test subject | Releases | Digits |
+|--------------|----------|--------|
 | Petra Petling | A B C D | the latitude minutes and its first decimal |
 | Nando Nano | E F G | the rest of the latitude, the longitude minutes |
 | Mysti Five-Star | H I J | the longitude decimals |
 
-A date only releases its digits at **GOLD** rank, which needs both a high
+A subject only releases its digits when you **pass**, which needs both a high
 affection score *and* a high log-quality score — being charming is not enough,
-you also have to be the kind of cacher who writes a decent log. Silver and DNF
-endings give you the scene, the joke and nothing else; the hub lets you redo
-any date as often as you like, and a bad redo never takes an earned GOLD away.
+you also have to be the kind of cacher who writes a decent log.
 
-Once all three are GOLD the GPSr locks on and shows the full coordinates, the
+Each assessment is six scored beats, and two of them have exactly one right
+answer:
+
+* a **geocaching-knowledge check** — what you log when a cache is soaked but
+  present, what a D 1.5 / T 5 rating actually means, what to do when your
+  solved final lands outside the two-mile guideline;
+* a **memory check** on something the subject told you three beats earlier.
+  Petra says once that she never logs in ballpoint. Nando asks you not to grab
+  him and to use the mirror. Mysti mentions twice how long her own puzzle took
+  her — and then asks.
+
+A perfect run scores 14–15 affection and 10–12 log quality; passing needs 11 and
+9. That forgives roughly one bad answer and nothing more. The meters show a tick
+at the passing mark while an assessment is running, so you can see where you
+stand. Near-miss and failed runs give you the scene, the joke and nothing else;
+the facility lets you retake any assessment as often as you like, and a bad
+retake never takes an earned pass away.
+
+Once all three are passed the GPSr locks on and shows the full coordinates, the
 cross-sum of all ten digits as a self-check, a copy button, a map link, and an
 optional link to your checker.
 
@@ -125,24 +151,44 @@ cache means editing that one file and nothing else.
 | File | What is in it |
 |------|---------------|
 | `js/coords.js` | Cache config, the digit mask, coordinate formatting |
+| `js/audio.js` | The whole soundtrack and every sound effect, synthesised |
 | `js/art.js` | Sprite grids, palettes, the 3×5 bitmap font, drawing primitives |
-| `js/scenes.js` | Backdrops, weather, particles, the stage layout |
+| `js/hosts.js` | R-3MI and V-TGM: procedural bodies, expressions, arm poses |
+| `js/logo.js` | The Kalibrierungsanlage badge and the cold-start sequence |
+| `js/scenes.js` | Backdrops, weather, particles, transitions, the stage |
 | `js/story.js` | **All text.** Cast, UI strings, script, scoring thresholds |
 | `js/game.js` | State, save/load, render loop, typewriter, GPSr panel |
 | `tools/setup.html` | Cache-owner console — coordinates in, config block out |
 
-Difficulty lives in `STORY.GOLD` and `STORY.SILVER` at the bottom of
+Difficulty lives in `STORY.GOLD` and `STORY.SILVER` near the bottom of
 `js/story.js`. Raising `GOLD` makes the digits harder to earn.
+
+**The two units follow Kalibrierungsanlage canon:** R-3MI always speaks German
+and V-TGM always speaks English, whichever language the interface is set to.
+The half of the `{ de, en }` pair that is not the spoken line is shown as a
+subtitle underneath. The engine decides which is which from `nativeLang` on the
+cast entry, so a new character speaking a fixed language needs one field.
 
 ---
 
 ## What is in the box
 
-- **Three date routes** with branching reactions, per-route ranks, and a real
-  ROT13 puzzle on Mysti's route
-- **Hand-authored pixel art** on a 320×180 backbuffer — animated backdrops,
-  drifting clouds, rain, fireflies, bats, a wandering Muggle with a dog, idle
-  bob, blinking, and mouths that move while their owner is talking
+- **Three assessments** with branching reactions, per-route ranks, a knowledge
+  check and a memory check each, and a real ROT13 puzzle on Mysti's route
+- **R-3MI and V-TGM** drawn procedurally, with nine expressions and eleven arm
+  poses that blend rather than snap, floating emotes from their expression
+  sheets, bubbling coolant tanks and coiled feed lines
+- **The Kalibrierungsanlage badge** built in pixels — gauge, bevelled chrome
+  plate, motto strip, certification tab — assembling after a cold-start log
+- **Hand-authored pixel art** on a 320×180 backbuffer: animated backdrops,
+  drifting clouds, rain with splashes, fireflies, bats, dust motes, a wandering
+  Muggle with a dog, block-dissolve scene transitions, confetti, idle bob,
+  blinking, reaction hops and recoils, and mouths that move while their owner
+  is talking
+- **A soundtrack with no audio files.** A small tracker: pulse waves at three
+  duty cycles, triangle bass, filtered-noise percussion and a feedback delay,
+  playing six tracks — one for the title and one per location — plus fourteen
+  synthesised sound effects
 - **A GPSr panel** that hunts for satellites, scrambles the digits it does not
   have yet, and flips them into place as you earn them
 - **German and English**, switchable at any point mid-sentence
@@ -152,6 +198,14 @@ Difficulty lives in `STORY.GOLD` and `STORY.SILVER` at the bottom of
   live regions for screen readers
 
 ---
+
+## Related
+
+Part of the Team_Aperture Kalibrierungsanlage series. R-3MI and V-TGM, their
+colours and their two-language double act come from
+[anlage-ii](https://github.com/Team-Aperture/anlage-ii); the badge follows the
+house style of
+[rundheitsprotokoll](https://github.com/Team-Aperture/rundheitsprotokoll).
 
 ## Disclaimer
 

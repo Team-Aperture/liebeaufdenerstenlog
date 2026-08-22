@@ -1,7 +1,7 @@
 {
   "name": "Liebe auf den ersten Log",
   "short_name": "Erster Log",
-  "description": "Ein zweisprachiges Pixel-Art-Datingspiel, das die Final-Koordinaten eines Geocaches verrät.",
+  "description": "Sektor 12 der Kalibrierungsanlage: ein zweisprachiges Pixel-Art-Datingspiel, das die Final-Koordinaten eines Geocaches verrät.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

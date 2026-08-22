@@ -9,11 +9,11 @@ conservative subset of HTML, and this stays inside it.
 
 ## Kurzbeschreibung / Short description
 
-**DE**  Die Koordinaten oben sind nicht die Dose. Spiel das Datingspiel, gewinn
-drei Herzen, bekomm zehn Ziffern.
+**DE**  Die Koordinaten oben sind nicht die Dose. Sektor 12 der
+Kalibrierungsanlage: drei Prüfungen bestehen, zehn Ziffern bekommen.
 
-**EN**  The posted coordinates are not the cache. Play the dating sim, win three
-hearts, get ten digits.
+**EN**  The posted coordinates are not the cache. Sector 12 of the Calibration
+Facility: pass three assessments, get ten digits.
 
 ---
 
@@ -22,9 +22,10 @@ hearts, get ten digits.
 > **Die Listing-Koordinaten sind nicht die Dose.** Sie sind eine Wiese. Eine
 > schöne Wiese, aber eine Wiese.
 >
-> Du bist auf dem Mega-Event „Liebe auf den ersten Log“. Kommentiert wird es von
-> zwei Drohnen: **T4-TC**, die alles großartig findet, und **D-NF**, der 4.112
-> Fehlversuche und null Beziehungen geloggt hat.
+> Sektor 12 der Kalibrierungsanlage ist wieder online und möchte deine
+> emotionale Verträglichkeit messen. Durch die Prüfung führen dich zwei mobile
+> Einheiten: **R-3MI**, die alles großartig findet und Deutsch spricht, und
+> **V-TGM**, die Meinungen hat und Englisch spricht.
 >
 > Drei Caches möchten mit dir ausgehen:
 >
@@ -32,9 +33,10 @@ hearts, get ten digits.
 > * **Nando Nano** — winzig, magnetisch, schwer zu greifen.
 > * **Mysti Fünf-Sterne** — kompliziert, rätselhaft, 47 Tabs offen.
 >
-> Jedes Date, das **richtig gut** läuft, gibt dir einen Teil der
-> Final-Koordinaten. Charmant sein reicht nicht — du musst auch jemand sein, der
-> anständige Logs schreibt. Alle drei Teile, und dein GPS rastet ein.
+> Jede Prüfung, die du **bestehst**, gibt dir einen Teil der Final-Koordinaten.
+> Charmant sein reicht nicht: In jeder Prüfung stecken eine Geocaching-Wissens-
+> frage und eine Frage danach, ob du zugehört hast. Alle drei Teile, und dein
+> GPS rastet ein.
 >
 > Das Spiel läuft direkt im Browser, auf Handy wie Rechner, auf Deutsch und
 > Englisch, ohne Installation und ohne Konto. Es funktioniert auch offline:
@@ -58,9 +60,10 @@ hearts, get ten digits.
 > **The posted coordinates are not the cache.** They are a field. A nice field,
 > but a field.
 >
-> You are at the "Love at First Log" mega-event, commentated by two drones:
-> **T4-TC**, who thinks everything is wonderful, and **D-NF**, who has logged
-> 4,112 did-not-finds and zero relationships.
+> Sector 12 of the Calibration Facility is back online and would like to
+> measure your emotional compatibility. Running the tests are two mobile units:
+> **R-3MI**, who is delighted about everything and speaks German, and
+> **V-TGM**, who has opinions and speaks English.
 >
 > Three caches would like to go out with you:
 >
@@ -68,9 +71,10 @@ hearts, get ten digits.
 > * **Nando Nano** — tiny, magnetic, hard to get hold of.
 > * **Mysti Five-Star** — complicated, cryptic, 47 tabs open.
 >
-> Every date that goes **really** well releases part of the final coordinates.
-> Being charming is not enough — you also have to be the sort of cacher who
-> writes a decent log. Collect all three parts and your GPSr locks on.
+> Every assessment you **pass** releases part of the final coordinates. Being
+> charming is not enough: each one contains a geocaching-knowledge question and
+> a question about whether you were listening. Collect all three parts and your
+> GPSr locks on.
 >
 > It runs in the browser on phone or desktop, in German and English, with no
 > install and no account. It also works offline: load it once and it keeps
@@ -95,20 +99,23 @@ hearts, get ten digits.
 <p><strong>Die Listing-Koordinaten sind nicht die Dose.</strong> Sie sind eine
 Wiese. Eine schöne Wiese, aber eine Wiese.</p>
 
-<p>Du bist auf dem Mega-Event &bdquo;Liebe auf den ersten Log&ldquo;.
-Kommentiert wird es von zwei Drohnen: <strong>T4-TC</strong>, die alles
-gro&szlig;artig findet, und <strong>D-NF</strong>, der 4.112 Fehlversuche und
-null Beziehungen geloggt hat.</p>
+<p>Sektor 12 der Kalibrierungsanlage ist wieder online und m&ouml;chte deine
+emotionale Vertr&auml;glichkeit messen. Durch die Pr&uuml;fung f&uuml;hren dich
+zwei mobile Einheiten: <strong>R-3MI</strong>, die alles gro&szlig;artig findet
+und Deutsch spricht, und <strong>V-TGM</strong>, die Meinungen hat und Englisch
+spricht.</p>
 
-<p>Drei Caches m&ouml;chten mit dir ausgehen:</p>
+<p>Drei Pr&uuml;fk&ouml;rper m&ouml;chten mit dir ausgehen:</p>
 <ul>
   <li><strong>Petra Petling</strong> &mdash; klassisch, wasserdicht, emotional leicht feucht.</li>
   <li><strong>Nando Nano</strong> &mdash; winzig, magnetisch, schwer zu greifen.</li>
   <li><strong>Mysti F&uuml;nf-Sterne</strong> &mdash; kompliziert, r&auml;tselhaft, 47 Tabs offen.</li>
 </ul>
 
-<p>Jedes Date, das <em>richtig gut</em> l&auml;uft, gibt dir einen Teil der
-Final-Koordinaten. Alle drei Teile, und dein GPS rastet ein.</p>
+<p>Jede Pr&uuml;fung, die du <em>bestehst</em>, gibt dir einen Teil der
+Final-Koordinaten. Charmant sein reicht nicht &mdash; in jeder Pr&uuml;fung
+stecken eine Wissensfrage und eine Frage danach, ob du zugeh&ouml;rt hast.
+Alle drei Teile, und dein GPS rastet ein.</p>
 
 <p><a href="LINK"><strong>&#9654; Hier spielen / Play here</strong></a></p>
 
@@ -120,10 +127,10 @@ Kopier-Knopf.</p>
 <hr>
 
 <p><strong>The posted coordinates are not the cache.</strong> Play the dating
-sim, win three hearts, collect ten digits. Three dates: Petra Petling
-(classic, waterproof), Nando Nano (tiny, magnetic) and Mysti Five-Star
-(complicated, cryptic). Every date that goes really well releases part of the
-final coordinates.</p>
+sim, pass three assessments, collect ten digits. Three test subjects: Petra
+Petling (classic, waterproof), Nando Nano (tiny, magnetic) and Mysti Five-Star
+(complicated, cryptic). Every assessment you pass releases part of the final
+coordinates. In German and English, hosted by R-3MI and V-TGM.</p>
 
 <p>Bitte einen Stift mitbringen. Der Stift ist immer das Problem. /
 Please bring a pen. The pen is always the problem.</p>

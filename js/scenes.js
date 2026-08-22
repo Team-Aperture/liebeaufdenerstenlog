@@ -144,6 +144,23 @@ window.SCENES = (function () {
     }
   }
 
+  function confetti(count) {
+    for (let i = 0; i < (count || 40); i++) {
+      spawn({
+        kind: "confetti",
+        x: Math.random() * W,
+        y: -6 - Math.random() * 40,
+        vx: (Math.random() - 0.5) * 22,
+        vy: 26 + Math.random() * 34,
+        life: 3.4 + Math.random() * 1.6,
+        age: 0,
+        s: Math.random() < 0.35 ? 2 : 1,
+        spin: Math.random() * 6,
+        color: ["#ff5d9e", "#ffc857", "#2ecf62", "#c0322c", "#7dfab4"][i % 5]
+      });
+    }
+  }
+
   function burstThorns(x, y) {
     for (let i = 0; i < 14; i++) {
       spawn({
@@ -169,6 +186,10 @@ window.SCENES = (function () {
       p.y += p.vy * dt;
       if (p.kind === "heart") p.vy += 12 * dt;
       if (p.kind === "spark") { p.vy += 46 * dt; p.vx *= 0.97; }
+      if (p.kind === "confetti") {
+        p.spin += dt * 9;
+        p.vx += Math.sin(p.age * 4 + p.spin) * 26 * dt;
+      }
     }
   }
 
@@ -177,11 +198,58 @@ window.SCENES = (function () {
       const fade = 1 - p.age / p.life;
       if (fade < 0.35 && Math.floor(p.age * 22) % 2) continue; /* flicker out */
       if (p.kind === "heart") ART.heart(ctx, p.x, p.y, p.s, p.color);
-      else ART.rect(ctx, p.x, p.y, p.s, p.s, p.color);
+      else if (p.kind === "confetti") {
+        const flat = Math.abs(Math.sin(p.spin)) < 0.4;
+        ART.rect(ctx, p.x, p.y, p.s * (flat ? 3 : 1), p.s * (flat ? 1 : 3), p.color);
+      } else ART.rect(ctx, p.x, p.y, p.s, p.s, p.color);
     }
   }
 
-  function clearParticles() { particles = []; }
+  function clearParticles() { particles = []; emotes.length = 0; }
+
+  /* ------------------------------------------------------------------
+   * Emotes — the floating symbols from the expression sheets. They are
+   * pinned to whoever triggered them and live about a second and a half.
+   * ------------------------------------------------------------------ */
+  const emotes = [];
+
+  function showEmote(who, kind) {
+    emotes.push({ who: who, kind: kind, age: 0, life: 1.7 });
+  }
+
+  function drawEmotes(ctx, scene, t) {
+    for (let i = emotes.length - 1; i >= 0; i--) {
+      const e = emotes[i];
+      if (e.age >= e.life) { emotes.splice(i, 1); continue; }
+      let x = W / 2, y = 40;
+      if (e.who === "r3mi" || e.who === "vtgm") {
+        const m = UNIT_MARKS[e.who];
+        x = m[0] + HOSTS.size(e.who).w * m[2] * 0.5;
+        y = m[1] - HOSTS.size(e.who).h * m[2] - 6;
+      } else {
+        const stage = STAGE[scene];
+        let mark = null;
+        if (stage) {
+          if (e.who === "you" && stage.you) mark = [stage.you[0], stage.you[1], stage.you[2], "you"];
+          else if (stage.date && stage.date[0] === e.who) mark = [stage.date[1], stage.date[2], stage.date[3], e.who];
+          else if (stage.extras) {
+            const hitList = stage.extras.filter((x2) => x2[0] === e.who);
+            if (hitList.length) mark = [hitList[0][1], hitList[0][2], hitList[0][3], e.who];
+          }
+        }
+        if (mark) {
+          const def = ART.sprites[mark[3]];
+          x = mark[0] + (def ? def.w : 16) * mark[2] * 0.5;
+          y = mark[1] - (def ? def.h : 24) * mark[2] - 6;
+        }
+      }
+      HOSTS.emote(ctx, e.kind, x, y, 2, e.age, null);
+    }
+  }
+
+  function updateEmotes(dt) {
+    for (const e of emotes) e.age += dt;
+  }
 
   /* ------------------------------------------------------------------
    * Weather: drawn procedurally from time so it never allocates.
@@ -193,6 +261,31 @@ window.SCENES = (function () {
       const x = wrap(seed * 3.7 + t * 26, W + 40) - 20;
       const y = wrap(seed * 7.3 + t * 190 + (i % 3) * 40, H + 30) - 10;
       ART.rect(ctx, x, y, 1, 3, i % 5 === 0 ? "#cfe6ef" : "#8fb6c9");
+    }
+    /* splashes: each one is a drop's landing, phased off the same seed */
+    for (let i = 0; i < 22; i++) {
+      const seed = i * 53.7;
+      const x = wrap(seed * 11.3, W);
+      const phase = (t * 2.1 + seed * 0.37) % 1;
+      const gy = 150 + ((i * 7) % 26);
+      if (phase > 0.72) {
+        const k = (phase - 0.72) / 0.28;
+        const spread = Math.round(k * 3);
+        ART.rect(ctx, x - spread, gy, 1, 1, "#bcd9e6");
+        ART.rect(ctx, x + spread, gy, 1, 1, "#bcd9e6");
+        if (k < 0.5) ART.rect(ctx, x, gy - 1, 1, 1, "#e4f2f8");
+      }
+    }
+  }
+
+  /** Slow motes drifting through a shaft of light. */
+  function motes(ctx, t, tint) {
+    for (let i = 0; i < 22; i++) {
+      const seed = i * 27.31;
+      const x = wrap(seed * 13.7 + Math.sin(t * 0.35 + i) * 9, W);
+      const y = wrap(seed * 7.9 - t * 5, H - 40) + 12;
+      const on = Math.sin(t * 1.4 + i * 2.1) > -0.2;
+      if (on) ART.rect(ctx, x, y, 1, 1, tint || "#fff4cf");
     }
   }
 
@@ -310,6 +403,7 @@ window.SCENES = (function () {
       rain(ctx, t, 80);
     } else {
       leaves(ctx, t);
+      motes(ctx, t, "#fff4cf");
     }
   }
 
@@ -465,24 +559,70 @@ window.SCENES = (function () {
   /* ------------------------------------------------------------------
    * Actors: who stands where, in which scene.
    * ------------------------------------------------------------------ */
-  /* [x, footY, scale] — footY is where the boots meet the ground. */
+  /* [x, footY, scale] — footY is where the boots meet the ground.
+   * The two units stand nearer the camera at the bottom corners, half
+   * out of frame, which frames the scene and keeps the middle clear. */
   const STAGE = {
-    event:  { you: [42, 152, 3], extras: [["petra", 196, 152, 3], ["nando", 258, 152, 2]] },
-    forest: { you: [42, 152, 3], date: ["petra", 208, 152, 3] },
-    city:   { you: [42, 152, 3], date: ["nando", 224, 152, 2] },
-    ruins:  { you: [42, 152, 3], date: ["mysti", 208, 152, 3] },
+    event:  { you: [62, 150, 3], extras: [["petra", 176, 150, 3], ["nando", 236, 150, 2]] },
+    forest: { you: [62, 150, 3], date: ["petra", 186, 150, 3] },
+    city:   { you: [62, 150, 3], date: ["nando", 196, 150, 2] },
+    ruins:  { you: [62, 150, 3], date: ["mysti", 186, 150, 3] },
     finale: {
-      you: [24, 152, 3],
-      extras: [["petra", 104, 152, 3], ["nando", 172, 152, 2], ["mysti", 224, 152, 3]]
+      you: [40, 148, 3],
+      extras: [["petra", 108, 148, 3], ["nando", 166, 148, 2], ["mysti", 208, 148, 3]]
     }
   };
+
+  /* Where R-3MI and V-TGM stand, per scene. */
+  const UNIT_MARKS = { r3mi: [-8, 179, 2], vtgm: [268, 181, 2] };
+
+  /* ------------------------------------------------------------------
+   * Actor animation: a hop when something goes well, a recoil when it
+   * does not, and a slide-in when a character first appears.
+   * ------------------------------------------------------------------ */
+  const actorAnim = {};
+
+  const animFor = (name) => (actorAnim[name] ||
+    (actorAnim[name] = { hop: 0, recoil: 0, enter: 0, fidget: Math.random() * 6 }));
+
+  function react(name, kind) {
+    const a = animFor(name);
+    if (kind === "recoil") a.recoil = 1;
+    else a.hop = 1;
+  }
+
+  function enter(name) { animFor(name).enter = 1; }
+
+  function updateActors(dt) {
+    for (const k of Object.keys(actorAnim)) {
+      const a = actorAnim[k];
+      a.hop = Math.max(0, a.hop - dt * 2.2);
+      a.recoil = Math.max(0, a.recoil - dt * 3);
+      a.enter = Math.max(0, a.enter - dt * 1.8);
+      a.fidget += dt;
+    }
+  }
 
   /** Feet-anchored draw so a scale-2 Nando still stands on the ground. */
   function actor(ctx, name, x, footY, scale, t, opts) {
     const o = opts || {};
     const def = ART.sprites[name];
     if (!def) return;
-    const bob = Math.round(Math.sin(t * 1.8 + (o.phase || 0)) * 1);
+    const a = animFor(name);
+
+    /* a squashed-then-airborne hop, not a plain sine */
+    const hop = a.hop > 0 ? Math.sin(a.hop * Math.PI) * 6 * scale * 0.5 : 0;
+    const recoil = a.recoil > 0 ? Math.sin(a.recoil * Math.PI * 2) * 2 * scale : 0;
+    /* every so often, glance around */
+    const glance = Math.sin(a.fidget * 0.7) > 0.985 ? 1 : 0;
+
+    if (a.enter > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (1 - a.enter) * 2.2);
+    }
+    x += (o.flip ? 1 : -1) * a.enter * a.enter * 26 + recoil;
+
+    const bob = Math.round(Math.sin(t * 1.8 + (o.phase || 0)) * 1 - hop + glance);
     const y = footY - def.h * scale + bob;
     /* contact shadow keeps them from floating */
     ctx.save();
@@ -498,6 +638,7 @@ window.SCENES = (function () {
       talk: o.talking ? Math.floor(t * 8) % 2 === 0 : false,
       alpha: o.alpha
     });
+    if (a.enter > 0) ctx.restore();
     return { x: x, y: y, w: def.w * scale, h: def.h * scale };
   }
 
@@ -514,16 +655,97 @@ window.SCENES = (function () {
     if (s) ART.sprite(ctx, "gpsr", s[0] + 44, s[1] - 46 + wob, { scale: 2 });
   }
 
-  function bots(ctx, t, speaking) {
-    const hoverA = Math.round(Math.sin(t * 2.4) * 2);
-    const hoverB = Math.round(Math.sin(t * 2.4 + 1.6) * 2);
-    ART.sprite(ctx, "t4tc", 128, 18 + hoverA, {
-      scale: 2, talk: speaking === "bots" && Math.floor(t * 8) % 2 === 0
-    });
-    ART.sprite(ctx, "dnf", 166, 22 + hoverB, {
-      scale: 2, talk: speaking === "bots" && Math.floor(t * 8) % 3 === 0
+  /**
+   * The two units of the facility, standing in the near foreground.
+   * Whichever one is speaking leans in a little and gets its emote.
+   */
+  function units(ctx, t, o) {
+    const speaking = o.speaker;
+    ["r3mi", "vtgm"].forEach((who) => {
+      const m = UNIT_MARKS[who];
+      const talking = speaking === who || speaking === "units";
+      const lean = talking ? 3 : 0;
+      const dir = who === "r3mi" ? 1 : -1;
+      const box = HOSTS.draw(ctx, who, m[0] + lean * dir, m[1], m[2], {
+        t: t,
+        talking: talking,
+        expr: o[who + "Expr"],
+        pose: o[who + "Pose"]
+      });
+      /* A nameplate for whoever is talking, pinned to its own screen
+       * edge rather than centred on the unit — centred plates drift
+       * over whoever happens to be standing behind them. */
+      if (talking) {
+        const label = who === "r3mi" ? "R-3MI" : "V-TGM";
+        const wdt = ART.textWidth(label, 1) + 7;
+        const lx = who === "r3mi" ? 3 : W - wdt - 3;
+        const ly = m[1] - HOSTS.size(who).h * m[2] - 12;
+        ART.rect(ctx, lx, ly, wdt, 10, "#0e0b14dd");
+        ART.rect(ctx, lx, ly + 9, wdt, 1,
+                 who === "r3mi" ? HOSTS.PAL.r3mi.accent : HOSTS.PAL.vtgm.accent);
+        ART.text(ctx, label, lx + 3, ly + 3, 1,
+                 who === "r3mi" ? HOSTS.PAL.r3mi.eye : HOSTS.PAL.vtgm.eye);
+      }
     });
   }
+
+  /* ------------------------------------------------------------------
+   * Public render entry point
+   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------
+   * Transitions. A block dissolve: each 8x8 cell has a fixed threshold,
+   * so cells wink out and back in a stable scatter rather than a sweep.
+   * ------------------------------------------------------------------ */
+  const CELL = 8;
+  const COLS = Math.ceil(W / CELL), ROWS = Math.ceil(H / CELL);
+  const cellOrder = [];
+  for (let cy = 0; cy < ROWS; cy++) {
+    for (let cx = 0; cx < COLS; cx++) {
+      /* diagonal bias plus a stable jitter, so it reads as a wipe with
+         a bit of grit rather than as pure noise */
+      const diag = (cx + cy) / (COLS + ROWS);
+      const jitter = (((cx * 73 + cy * 151) % 97) / 97) * 0.45;
+      cellOrder.push(Math.min(1, diag * 0.7 + jitter));
+    }
+  }
+
+  let trans = { active: false, k: 0, dir: 1, onSwap: null, swapped: false };
+
+  function beginTransition(onSwap) {
+    trans = { active: true, k: 0, dir: 1, onSwap: onSwap || null, swapped: false };
+  }
+
+  function updateTransition(dt) {
+    if (!trans.active) return;
+    /* dir carries the sign — without it the cover-up never uncovers. */
+    trans.k += dt * (trans.dir > 0 ? 3.2 : -2.4);
+    if (trans.dir > 0 && trans.k >= 1) {
+      trans.k = 1;
+      trans.dir = -1;
+      if (trans.onSwap && !trans.swapped) { trans.swapped = true; trans.onSwap(); }
+    } else if (trans.dir < 0 && trans.k <= 0) {
+      trans.k = 0;
+      trans.active = false;
+    }
+  }
+
+  function drawTransition(ctx) {
+    if (!trans.active) return;
+    let i = 0;
+    for (let cy = 0; cy < ROWS; cy++) {
+      for (let cx = 0; cx < COLS; cx++, i++) {
+        if (cellOrder[i] < trans.k) {
+          ART.rect(ctx, cx * CELL, cy * CELL, CELL, CELL, "#160b1c");
+        }
+      }
+    }
+  }
+
+  const inTransition = () => trans.active;
+
+  /* A one-frame colour wash, used for glitches and big reveals. */
+  let flash = { a: 0, color: "#ffffff" };
+  function setFlash(color, amount) { flash = { a: amount || 0.6, color: color || "#ffffff" }; }
 
   /* ------------------------------------------------------------------
    * Public render entry point
@@ -570,11 +792,21 @@ window.SCENES = (function () {
         });
       }
       props(ctx, scene, t);
-      bots(ctx, t, o.speaker);
+      units(ctx, t, o);
     }
 
     drawParticles(ctx);
+    drawEmotes(ctx, scene, t);
     ctx.restore();
+
+    if (flash.a > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.85, flash.a);
+      ART.rect(ctx, 0, 0, W, H, flash.color);
+      ctx.restore();
+    }
+
+    drawTransition(ctx);
 
     /* vignette + scanlines: sold separately, included free */
     ctx.save();
@@ -583,14 +815,31 @@ window.SCENES = (function () {
     ctx.restore();
   }
 
+  function update(dt) {
+    updateParticles(dt);
+    updateEmotes(dt);
+    updateTransition(dt);
+    updateActors(dt);
+    HOSTS.update(dt);
+    if (flash.a > 0) flash.a = Math.max(0, flash.a - dt * 2.4);
+  }
+
   return {
     W: W, H: H, GROUND: GROUND,
     render: render,
-    update: updateParticles,
+    update: update,
     burstHearts: burstHearts,
     burstSparks: burstSparks,
     burstThorns: burstThorns,
+    confetti: confetti,
+    showEmote: showEmote,
+    react: react,
+    enter: enter,
     clearParticles: clearParticles,
-    STAGE: STAGE
+    beginTransition: beginTransition,
+    inTransition: inTransition,
+    flash: setFlash,
+    STAGE: STAGE,
+    UNIT_MARKS: UNIT_MARKS
   };
 })();

@@ -5,13 +5,16 @@
 
 (function () {
   const $ = (id) => document.getElementById(id);
-  const SAVE_KEY = "liebe-auf-den-ersten-log/v2";
+  const SAVE_KEY = "liebe-auf-den-ersten-log/v3";
 
   const REDUCED = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* Per-route ceilings, used to scale the meters. */
-  const ROUTE_MAX = { aff: 6, log: 6 };
+  /* Which track plays over which backdrop. */
+  const TRACK_FOR = {
+    title: "title", event: "hub", forest: "petra",
+    city: "nando", ruins: "mysti", finale: "final"
+  };
 
   /* ------------------------------------------------------------------
    * State
@@ -21,10 +24,10 @@
     sound: false,
     started: false,
     node: "pro1",
-    cur: null,                 /* { route, aff, log } while on a date */
-    ranks: {},                 /* route -> gold | silver | bronze     */
-    scores: {},                /* route -> { aff, log }               */
-    result: null,              /* the route result currently on screen */
+    cur: null,                 /* { route, aff, log } during an assessment */
+    ranks: {},                 /* route -> gold | silver | bronze          */
+    scores: {},                /* route -> { aff, log }                    */
+    result: null,              /* the assessment record currently on screen */
     dates: 0
   });
 
@@ -48,52 +51,12 @@
 
   const t = () => STORY.ui[state.lang];
   const tr = (pair) => (pair ? pair[state.lang] : "");
-  const goldRoutes = () =>
-    STORY.routes.filter((r) => state.ranks[r] === "gold");
+  const goldRoutes = () => STORY.routes.filter((r) => state.ranks[r] === "gold");
 
   const isSpecial = (id) =>
     id === "hub" || id === "reveal" || String(id).indexOf("END:") === 0;
 
-  /* ------------------------------------------------------------------
-   * Sound. A handful of square waves; created on first gesture only.
-   * ------------------------------------------------------------------ */
-  const Audio2 = (function () {
-    let ac = null;
-    function ctx() {
-      if (!state.sound) return null;
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      if (!ac) ac = new AC();
-      if (ac.state === "suspended") ac.resume();
-      return ac;
-    }
-    function tone(freq, dur, when, vol, type) {
-      const a = ctx();
-      if (!a) return;
-      const at = a.currentTime + (when || 0);
-      const o = a.createOscillator();
-      const g = a.createGain();
-      o.type = type || "square";
-      o.frequency.setValueAtTime(freq, at);
-      g.gain.setValueAtTime(0.0001, at);
-      g.gain.exponentialRampToValueAtTime(vol || 0.05, at + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-      o.connect(g).connect(a.destination);
-      o.start(at);
-      o.stop(at + dur + 0.02);
-    }
-    return {
-      blip:   () => tone(620, 0.07, 0, 0.05),
-      pick:   () => { tone(520, 0.06, 0, 0.05); tone(780, 0.09, 0.06, 0.045); },
-      good:   () => [0, 0.09, 0.18, 0.3].forEach((w, i) =>
-                      tone([523, 659, 784, 1047][i], 0.16, w, 0.05)),
-      bad:    () => { tone(220, 0.16, 0, 0.05); tone(165, 0.24, 0.13, 0.05); },
-      unlock: () => [0, 0.08, 0.16].forEach((w, i) =>
-                      tone([784, 988, 1319][i], 0.14, w, 0.05)),
-      lock:   () => [0, 0.12, 0.24, 0.36, 0.52].forEach((w, i) =>
-                      tone([523, 659, 784, 1047, 1319][i], 0.3, w, 0.06, "triangle"))
-    };
-  })();
+  const sfx = (name, arg) => AUDIO.play(name, arg);
 
   /* ------------------------------------------------------------------
    * Canvas
@@ -106,31 +69,71 @@
   const pctx = portrait.getContext("2d");
   [sctx, tctx, pctx].forEach((c) => { c.imageSmoothingEnabled = false; });
 
-  const view = { scene: "event", speaker: "bots", weather: null, shake: 0 };
+  const view = { scene: "event", speaker: "units", weather: null, shake: 0 };
 
+  /* Title screen phases: the facility boots, the badge assembles, then
+   * the menu appears. Clicking anywhere skips ahead. */
+  let titlePhase = "boot";
+  let titleClock = 0;
+
+  function skipTitleIntro() {
+    if (titlePhase === "ready") return;
+    titlePhase = "ready";
+    titleClock = 3;
+    $("titleScreen").classList.add("ready");
+  }
+
+  /* ------------------------------------------------------------------
+   * Portraits
+   * ------------------------------------------------------------------ */
   function drawPortrait(time) {
-    const char = STORY.chars[view.speaker] || STORY.chars.bots;
-    const def = ART.sprites[char.sprite];
+    const char = STORY.chars[view.speaker] || STORY.chars.units;
     pctx.clearRect(0, 0, portrait.width, portrait.height);
-    ART.rect(pctx, 0, 0, portrait.width, portrait.height, "#ffd1e0");
-    /* soft ground shadow so heads are not floating in a pink void */
-    ART.rect(pctx, 0, portrait.height - 10, portrait.width, 10, "#f2b6cd");
-    if (!def) return;
 
-    const scale = def.h > 16 ? 3 : 4;
+    const bg = char.host
+      ? (char.host === "r3mi" ? "#123021" : "#33161a")
+      : (char.system ? "#122435" : "#ffd1e0");
+    ART.rect(pctx, 0, 0, portrait.width, portrait.height, bg);
+    ART.rect(pctx, 0, portrait.height - 10, portrait.width, 10,
+             char.host ? "#0b1c14" : (char.system ? "#0d1a26" : "#f2b6cd"));
+
+    if (char.host) {
+      const w = HOSTS.size(char.host).w * 2;
+      HOSTS.draw(pctx, char.host, Math.round((portrait.width - w) / 2) + 2,
+                 portrait.height - 2, 2, { t: time, talking: typing });
+      return;
+    }
+
+    if (char.system) {
+      /* the facility itself: a slowly sweeping calibration dial */
+      const cx = portrait.width / 2, cy = portrait.height / 2;
+      for (let a = 0; a < 360; a += 6) {
+        const r = a * Math.PI / 180;
+        ART.rect(pctx, cx + Math.cos(r) * 15, cy + Math.sin(r) * 15, 1, 1, "#2a5a80");
+      }
+      const ang = -Math.PI / 2 + Math.sin(time * 1.1) * 0.9;
+      for (let i = 0; i < 13; i++) {
+        ART.rect(pctx, cx + Math.cos(ang) * i, cy + Math.sin(ang) * i, 1, 1, "#69d6ff");
+      }
+      ART.rect(pctx, cx - 2, cy - 2, 4, 4, "#9ae8ff");
+      return;
+    }
+
+    const def = ART.sprites[char.sprite];
+    if (!def) return;
+    const scale = 3;
     const x = Math.round((portrait.width - def.w * scale) / 2);
     const bob = Math.round(Math.sin(time * 2.2) * 1);
-    const y = def.h > 16
-      ? portrait.height - def.h * scale + 4 + bob
-      : Math.round((portrait.height - def.h * scale) / 2) + bob;
-
-    ART.sprite(pctx, char.sprite, x, y, {
+    ART.sprite(pctx, char.sprite, x, portrait.height - def.h * scale + 4 + bob, {
       scale: scale,
       blink: (time * 1000) % 3600 < 130,
       talk: typing && Math.floor(time * 9) % 2 === 0
     });
   }
 
+  /* ------------------------------------------------------------------
+   * Loop
+   * ------------------------------------------------------------------ */
   let lastTs = 0;
   let clock = 0;
 
@@ -151,29 +154,45 @@
       });
       drawPortrait(clock);
     } else {
-      SCENES.render(tctx, "title", { time: clock });
-      drawTitleArt(tctx, clock);
+      titleClock += dt;
+      renderTitle();
     }
     tickTypewriter(dt);
     tickGpsNoise();
     requestAnimationFrame(loop);
   }
 
-  /* Big pixel wordmark painted over the title backdrop. */
-  function drawTitleArt(ctx, time) {
-    const bounce = Math.round(Math.sin(time * 1.6) * 2);
-    ART.text(ctx, "LIEBE AUF DEN", 42, 30 + bounce, 2, "#2b1630");
-    ART.text(ctx, "LIEBE AUF DEN", 41, 29 + bounce, 2, "#ffe9a8");
-    ART.text(ctx, "ERSTEN LOG", 66, 48 + bounce, 3, "#2b1630");
-    ART.text(ctx, "ERSTEN LOG", 64, 46 + bounce, 3, "#ff8ab5");
-    ART.heart(ctx, 30, 44 + bounce, 3, "#ff5d9e");
-    ART.heart(ctx, 268, 44 - bounce, 3, "#ff5d9e");
+  function renderTitle() {
+    const ui = t();
+    if (titlePhase === "boot") {
+      const done = LOGO.boot(tctx, ui.bootLines, titleClock);
+      if (done) { titlePhase = "logo"; titleClock = 0; sfx("boot"); }
+      return;
+    }
 
-    ART.sprite(ctx, "petra", 74, 108, { scale: 3, blink: (time * 1000) % 3400 < 120 });
-    ART.sprite(ctx, "nando", 140, 132, { scale: 2, blink: (time * 1000 + 900) % 3400 < 120 });
-    ART.sprite(ctx, "mysti", 186, 108, { scale: 3, blink: (time * 1000 + 1800) % 3400 < 120 });
-    ART.sprite(ctx, "t4tc", 24, 96 + Math.round(Math.sin(time * 2.4) * 2), { scale: 2 });
-    ART.sprite(ctx, "dnf", 272, 100 + Math.round(Math.sin(time * 2.4 + 1.5) * 2), { scale: 2 });
+    /* backdrop for the badge */
+    SCENES.render(tctx, "title", { time: clock });
+    const p = titlePhase === "logo" ? Math.min(1, titleClock / 1.1) : 1;
+    LOGO.draw(tctx, ART.VIEW_W / 2, 58, clock, p, ui);
+
+    /* the cast lines up under the plate */
+    const reveal = titlePhase === "logo" ? Math.max(0, (titleClock - 0.7) / 0.8) : 1;
+    if (reveal > 0) {
+      tctx.save();
+      tctx.globalAlpha = Math.min(1, reveal);
+      const lift = Math.round((1 - Math.min(1, reveal)) * 14);
+      ART.sprite(tctx, "petra", 96, 108 + lift, { scale: 3, blink: (clock * 1000) % 3400 < 120 });
+      ART.sprite(tctx, "nando", 148, 132 + lift, { scale: 2, blink: (clock * 1000 + 900) % 3400 < 120 });
+      ART.sprite(tctx, "mysti", 186, 108 + lift, { scale: 3, blink: (clock * 1000 + 1800) % 3400 < 120 });
+      HOSTS.draw(tctx, "r3mi", 24, 180 + lift, 2, { t: clock });
+      HOSTS.draw(tctx, "vtgm", 248, 182 + lift, 2, { t: clock });
+      tctx.restore();
+    }
+
+    if (titlePhase === "logo" && titleClock > 1.9) {
+      titlePhase = "ready";
+      $("titleScreen").classList.add("ready");
+    }
   }
 
   /* ------------------------------------------------------------------
@@ -183,28 +202,38 @@
   let shown = 0;
   let typing = false;
   let onTypeDone = null;
+  let lastTick = 0;
 
-  function say(text, done) {
+  function say(text, sub, done) {
     fullText = text;
     shown = REDUCED ? text.length : 0;
     typing = !REDUCED;
     onTypeDone = done || null;
+    lastTick = 0;
     $("dialogueText").textContent = fullText.slice(0, shown);
-    /* Announce the whole line once; the typewriter itself is silent to
-     * assistive tech, which would otherwise hear it letter by letter. */
-    $("srLive").textContent = ($("speaker").textContent || "") + ": " + fullText;
+    $("dialogueSub").textContent = sub || "";
+    $("dialogueSub").hidden = !sub;
+    $("srLive").textContent =
+      ($("speaker").textContent || "") + ": " + fullText + (sub ? " — " + sub : "");
     $("skipBtn").hidden = !typing;
     if (!typing && onTypeDone) { const f = onTypeDone; onTypeDone = null; f(); }
   }
 
   function tickTypewriter(dt) {
     if (!typing) return;
+    const before = Math.floor(shown);
     shown = Math.min(fullText.length, shown + dt * 62);
-    $("dialogueText").textContent = fullText.slice(0, Math.floor(shown));
+    const now = Math.floor(shown);
+    if (now !== before) {
+      $("dialogueText").textContent = fullText.slice(0, now);
+      lastTick += now - before;
+      if (lastTick >= 3) { lastTick = 0; sfx("type"); }
+    }
     if (shown >= fullText.length) finishTyping();
   }
 
   function finishTyping() {
+    if (!typing) return;
     typing = false;
     shown = fullText.length;
     $("dialogueText").textContent = fullText;
@@ -234,7 +263,8 @@
       body.appendChild(s);
     }
     b.append(key, body);
-    b.addEventListener("click", () => { Audio2.pick(); onClick(); });
+    b.addEventListener("mouseenter", () => sfx("blip"));
+    b.addEventListener("click", () => { sfx("select"); onClick(); });
     box.appendChild(b);
     return b;
   }
@@ -250,6 +280,8 @@
 
   function startRoute(route) {
     state.cur = { route: route, aff: 0, log: 0 };
+    SCENES.enter(route);
+    SCENES.enter("you");
     goto(STORY.entry[route]);
   }
 
@@ -260,9 +292,9 @@
   }
 
   /**
-   * Score a finished date. This runs exactly once, on the transition —
-   * never from render(), so switching language on the results screen
-   * cannot quietly award a second date.
+   * Score a finished assessment. This runs exactly once, on the
+   * transition — never from render(), so switching language on the
+   * results screen cannot quietly award a second attempt.
    */
   function finishRoute(route) {
     const score = state.cur && state.cur.route === route
@@ -270,7 +302,7 @@
       : (state.scores[route] || { aff: 0, log: 0 });
     const rank = rankOf(score.aff, score.log);
 
-    /* Keep the best attempt: a bad redo never takes GOLD away. */
+    /* Keep the best attempt: a bad retake never takes a pass away. */
     const prev = state.scores[route];
     if (!prev || score.aff + score.log > prev.aff + prev.log) {
       state.scores[route] = score;
@@ -281,33 +313,45 @@
     state.cur = null;
     state.result = { route: route, rank: rank, aff: score.aff, log: score.log };
 
-    if (rank === "gold") { SCENES.burstHearts(200, 92, 18); Audio2.unlock(); }
-    else Audio2.bad();
+    if (rank === "gold") {
+      SCENES.burstHearts(190, 92, 22);
+      SCENES.flash("#ffe9a8", 0.35);
+      sfx("unlock");
+    } else {
+      sfx("deny");
+    }
 
     goto("END:" + route);
   }
 
   function applyChoice(c, node) {
     if (state.cur) {
-      state.cur.aff += c.aff || 0;
-      state.cur.log += c.log || 0;
+      /* Floors at zero: a disastrous answer costs you the pass, but the
+       * record should not read "-5 affection". */
+      state.cur.aff = Math.max(0, state.cur.aff + (c.aff || 0));
+      state.cur.log = Math.max(0, state.cur.log + (c.log || 0));
     }
     const anchor = SCENES.STAGE[node.scene];
     const px = anchor && anchor.date ? anchor.date[1] : 160;
-    if (c.fx === "hearts") { SCENES.burstHearts(px, 96, 10); Audio2.good(); }
-    else if (c.fx === "sparks") { SCENES.burstSparks(px, 104, 14); Audio2.blip(); }
-    else if (c.fx === "thorns") { SCENES.burstThorns(px, 120); Audio2.bad(); }
-    if ((c.aff || 0) < 0) Audio2.bad();
+    const subject = state.cur && state.cur.route;
+    if (c.fx === "hearts") { SCENES.burstHearts(px, 96, 12); sfx("heart"); }
+    else if (c.fx === "sparks") { SCENES.burstSparks(px, 104, 16); sfx("ping", 2); }
+    else if (c.fx === "thorns") { SCENES.burstThorns(px, 120); sfx("thud"); }
+    if (subject) SCENES.react(subject, (c.aff || 0) < 0 ? "recoil" : "hop");
+    if ((c.aff || 0) > 0) SCENES.react("you", "hop");
+    if ((c.aff || 0) < 0) sfx("deny");
+    if (node.quiz) {
+      SCENES.showEmote(c.right ? "r3mi" : "vtgm", c.right ? "sparkle" : "anger");
+      if (!c.right) SCENES.flash("#c0322c", 0.28);
+    }
     goto(c.to);
   }
 
   /* ------------------------------------------------------------------
    * Render: one function, driven entirely by state
    * ------------------------------------------------------------------ */
-  /* Result cards live outside #choices, so they need their own sweep. */
   function clearCards() {
-    document.querySelectorAll(".dialogue .result-card")
-      .forEach((el) => el.remove());
+    document.querySelectorAll(".dialogue .result-card").forEach((el) => el.remove());
   }
 
   function render() {
@@ -324,24 +368,60 @@
     renderDialogue(node);
   }
 
+  /** Swap backdrop, weather, unit moods and music for a beat. */
   function setScene(node) {
-    view.scene = node.scene || view.scene;
-    view.speaker = node.who || "bots";
+    const next = node.scene || view.scene;
+    if (next !== view.scene) {
+      const from = view.scene;
+      if (REDUCED) view.scene = next;
+      else SCENES.beginTransition(() => { view.scene = next; });
+      if (TRACK_FOR[next] !== TRACK_FOR[from]) AUDIO.music(TRACK_FOR[next]);
+    }
+    view.speaker = node.who || "units";
     view.weather = node.weather || null;
-    if (node.fx === "shake") view.shake = 1;
-    if (node.fx === "hearts") SCENES.burstHearts(160, 90, 12);
-    if (node.fx === "sparks") SCENES.burstSparks(160, 100, 16);
-    if (node.fx === "thorns") SCENES.burstThorns(200, 118);
+
+    const moods = { r3mi: node.r3mi, vtgm: node.vtgm };
+    for (const who of ["r3mi", "vtgm"]) {
+      if (!moods[who]) continue;
+      const [expr, pose] = String(moods[who]).split("/");
+      HOSTS.set(who, expr, pose);
+    }
+
+    if (node.emote) SCENES.showEmote(node.emote.who, node.emote.kind);
+    if (node.fx === "shake") { view.shake = 1; sfx("thud"); }
+    if (node.fx === "hearts") { SCENES.burstHearts(160, 90, 14); sfx("heart"); }
+    if (node.fx === "sparks") { SCENES.burstSparks(160, 100, 18); sfx("ping", 1); }
+    if (node.fx === "thorns") { SCENES.burstThorns(190, 118); sfx("thud"); }
+    if (node.fx === "glitch") { SCENES.flash("#69d6ff", 0.4); sfx("error"); }
+    if (node.weather === "rain") sfx("rain");
+    if (node.weather === "muggle") sfx("alert");
+  }
+
+  /**
+   * R-3MI speaks German and V-TGM speaks English, always. Whichever the
+   * player is not reading in becomes a subtitle under the line.
+   */
+  function linesFor(node, char) {
+    if (char && char.nativeLang) {
+      return {
+        spoken: node.text[char.nativeLang],
+        sub: char.nativeLang === state.lang ? null : node.text[state.lang]
+      };
+    }
+    return { spoken: tr(node.text), sub: null };
   }
 
   function renderDialogue(node) {
     setScene(node);
-    $("speaker").textContent = tr(STORY.chars[node.who] && STORY.chars[node.who].name);
+    const char = STORY.chars[node.who];
+    $("speaker").textContent = tr(char && char.name);
+    $("speaker").style.color = (char && char.tint) || "";
     clearChoices();
     updateChip(node.route);
     updateMeters();
 
-    say(tr(node.text), () => {
+    const L = linesFor(node, char);
+    say(L.spoken, L.sub, () => {
       clearChoices();
       if (node.choices) {
         node.choices.forEach((c) => addChoice(tr(c.t), null, () => applyChoice(c, node)));
@@ -357,15 +437,14 @@
   /* ------------------------------- hub ------------------------------ */
   function renderHub() {
     state.cur = null;
-    view.scene = "event";
-    view.speaker = "bots";
-    view.weather = null;
+    setScene({ scene: "event", who: "units", r3mi: "happy/present", vtgm: "neutral/idle" });
     updateChip(null);
     updateMeters();
 
-    $("speaker").textContent = tr(STORY.chars.bots.name);
+    $("speaker").textContent = tr(STORY.chars.units.name);
+    $("speaker").style.color = STORY.chars.units.tint;
     clearChoices();
-    say(t().hub + " " + t().hubSub, () => {
+    say(t().hub + " " + t().hubSub, null, () => {
       clearChoices();
       STORY.routes.forEach((r) => {
         const rank = state.ranks[r];
@@ -376,7 +455,7 @@
           : t().statusOpen;
         addChoice(
           tr(STORY.chars[r].name) + (rank === "gold" ? "  ★" : ""),
-          tr(meta.tagline) + " · " + meta.dt + " · " + statusText,
+          tr(meta.spec) + " · " + tr(meta.tagline) + " · " + meta.dt + " · " + statusText,
           () => startRoute(r),
           { className: rank === "gold" ? "route-done" : "" }
         );
@@ -395,19 +474,22 @@
       ? state.result
       : { route: route, rank: state.ranks[route] || "bronze", aff: 0, log: 0 };
     const rank = result.rank;
+    const comment = STORY.rankComment[rank];
 
-    view.scene = STORY.routeMeta[route].scene;
-    view.speaker = route;
-    view.weather = null;
+    setScene({
+      scene: STORY.routeMeta[route].scene, who: route,
+      r3mi: comment.expr, vtgm: comment.vexpr
+    });
     updateChip(route);
     updateMeters({ aff: result.aff, log: result.log });
 
     $("speaker").textContent = tr(STORY.chars[route].name);
+    $("speaker").style.color = STORY.chars[route].tint;
     clearChoices();
 
-    say(tr(STORY.rankTexts[route][rank]), () => {
+    say(tr(STORY.rankTexts[route][rank]), null, () => {
       clearChoices();
-      renderResultCard(route, rank);
+      renderResultCard(route, rank, comment, result);
       addChoice(t().backToHub, null, () => goto("hub"), { key: "◂" });
       if (rank !== "gold") {
         addChoice(t().replay, null, () => startRoute(route), { key: "↻" });
@@ -417,12 +499,12 @@
     });
   }
 
-  function renderResultCard(route, rank) {
+  function renderResultCard(route, rank, comment, result) {
     const card = document.createElement("div");
     card.className = "result-card";
 
     const h = document.createElement("h3");
-    h.textContent = t().rank;
+    h.textContent = t().rank + " · " + tr(STORY.routeMeta[route].spec);
     card.appendChild(h);
 
     const badge = document.createElement("div");
@@ -430,6 +512,27 @@
     badge.textContent = rank === "gold" ? t().statusGold
       : rank === "silver" ? t().statusSilver : t().statusBronze;
     card.appendChild(badge);
+
+    /* the score, against what a perfect run would have been */
+    const bar = document.createElement("p");
+    bar.className = "score-line";
+    bar.textContent =
+      t().affection + " " + result.aff + "/" + STORY.ROUTE_MAX.aff +
+      "  ·  " + t().logQuality + " " + result.log + "/" + STORY.ROUTE_MAX.log +
+      "  ·  " + t().statusGold.replace(/^★ /, "") .split(" —")[0] +
+      " ≥ " + STORY.GOLD.aff + " / " + STORY.GOLD.log;
+    card.appendChild(bar);
+
+    const quip = document.createElement("p");
+    quip.className = "unit-quip";
+    quip.textContent = comment.r3mi.de;
+    if (state.lang === "en") {
+      const s = document.createElement("span");
+      s.className = "unit-quip-sub";
+      s.textContent = comment.r3mi.en;
+      quip.appendChild(s);
+    }
+    card.appendChild(quip);
 
     const label = document.createElement("h3");
     label.textContent = rank === "gold" ? t().shardWon : t().shardLost;
@@ -454,24 +557,25 @@
 
   /* ------------------------------ reveal ---------------------------- */
   function renderReveal() {
-    view.scene = "finale";
-    view.speaker = "bots";
-    view.weather = null;
+    setScene({ scene: "finale", who: "units", r3mi: "proud/cheer", vtgm: "happy/highfive" });
     updateChip(null);
     updateMeters();
 
     const digits = GEO.digits(goldRoutes());
-    if (!digits) return renderHub();   /* can't happen; costs nothing */
+    if (!digits) return renderHub();
     const coords = GEO.format(digits);
 
-    $("speaker").textContent = tr(STORY.chars.bots.name);
+    $("speaker").textContent = tr(STORY.chars.units.name);
+    $("speaker").style.color = STORY.chars.units.tint;
     clearChoices();
-    Audio2.lock();
+    sfx("lock");
+    SCENES.confetti(70);
+    SCENES.flash("#ffffff", 0.5);
     for (let i = 0; i < 6; i++) {
-      setTimeout(() => SCENES.burstHearts(60 + i * 40, 80, 8), i * 160);
+      setTimeout(() => SCENES.burstHearts(40 + i * 46, 80, 8), i * 170);
     }
 
-    say(coords.pretty, () => {
+    say(coords.pretty, null, () => {
       clearChoices();
 
       const card = document.createElement("div");
@@ -531,7 +635,7 @@
     if (!route) { chip.hidden = true; return; }
     const meta = STORY.routeMeta[route];
     chip.hidden = false;
-    chip.textContent = tr(STORY.chars[route].name) + " · " + meta.dt;
+    chip.textContent = tr(meta.spec) + " · " + tr(STORY.chars[route].name) + " · " + meta.dt;
   }
 
   function updateMeters(override) {
@@ -539,7 +643,7 @@
     const src = override || state.cur;
     if (src) {
       aff = src.aff; log = src.log;
-      maxA = ROUTE_MAX.aff; maxL = ROUTE_MAX.log;
+      maxA = STORY.ROUTE_MAX.aff; maxL = STORY.ROUTE_MAX.log;
     } else {
       const totals = STORY.routes.reduce((acc, r) => {
         const s = state.scores[r] || { aff: 0, log: 0 };
@@ -547,13 +651,22 @@
         return acc;
       }, { aff: 0, log: 0 });
       aff = totals.aff; log = totals.log;
-      maxA = ROUTE_MAX.aff * 3; maxL = ROUTE_MAX.log * 3;
+      maxA = STORY.ROUTE_MAX.aff * 3; maxL = STORY.ROUTE_MAX.log * 3;
     }
     const pct = (v, m) => Math.max(0, Math.min(100, (v / m) * 100));
     $("affVal").textContent = String(aff);
     $("logVal").textContent = String(log);
     $("affBar").style.width = pct(aff, maxA) + "%";
     $("logBar").style.width = pct(log, maxL) + "%";
+    /* mark the pass threshold on the meters, but only while an
+     * assessment is actually running — at the hub it means nothing. */
+    const mark = (bar, goal) => {
+      const m = bar.parentNode;
+      m.style.setProperty("--goal", pct(goal, goal === STORY.GOLD.aff ? maxA : maxL) + "%");
+      m.style.setProperty("--goal-shown", src ? "1" : "0");
+    };
+    mark($("affBar"), STORY.GOLD.aff);
+    mark($("logBar"), STORY.GOLD.log);
   }
 
   let gpsNoiseAt = 0;
@@ -599,6 +712,7 @@
 
     const unlockedCount = slots.filter((s) => s.value != null).length;
     const animate = unlockedCount > previouslyUnlocked;
+    if (animate && state.started) sfx("ping", gold.length);
     previouslyUnlocked = unlockedCount;
 
     const pad = (n, w) => String(n).padStart(w, "0");
@@ -616,7 +730,6 @@
     lon.appendChild(sepEl("."));
     [7, 8, 9].forEach((i) => lon.appendChild(slotEl(slots[i], animate)));
 
-    /* satellite bars */
     const sats = $("gpsSats");
     sats.replaceChildren();
     const lit = gold.length * 3 + (GEO.complete(gold) ? 3 : 0);
@@ -638,7 +751,6 @@
         (cfg.distanceFromPostedMeters / 1000).toFixed(2) + " km";
     }
 
-    /* route ledger */
     const list = $("gpsRoutes");
     list.replaceChildren();
     STORY.routes.forEach((r) => {
@@ -672,7 +784,6 @@
       $("btnChecker").onclick = () =>
         window.open(cfg.checkerUrl, "_blank", "noopener");
     }
-
     if (cfg.hintRot13) {
       $("hintBox").hidden = false;
       $("hintValue").textContent = GEO.rot13(cfg.hintRot13);
@@ -681,6 +792,7 @@
 
   function copy(text, btn) {
     const done = () => {
+      sfx("page");
       if (!btn) return;
       const old = btn.textContent;
       btn.textContent = t().copied;
@@ -704,18 +816,18 @@
   }
 
   /* ------------------------------------------------------------------
-   * Static interface text (runs on every render and on language change)
+   * Static interface text
    * ------------------------------------------------------------------ */
   function applyStaticText() {
     const s = t();
     document.documentElement.lang = state.lang;
-    $("uiSubtitle").textContent = s.subtitle;
+    $("uiSubtitle").textContent = s.sector;
     $("affLabel").textContent = s.affection;
     $("logLabel").textContent = s.logQuality;
     $("langBtn").textContent = s.lang;
-    $("btnTitleLang").textContent = s.lang;
     $("soundBtn").textContent = "♪ " + (state.sound ? s.on : s.off);
     $("soundBtn").setAttribute("aria-pressed", String(state.sound));
+    $("soundBtn").title = s.music;
     $("restartBtn").textContent = s.restart;
     $("restartBtn").title = s.newGame;
     $("saveNote").textContent = s.saved;
@@ -733,12 +845,12 @@
     $("btnChecker").textContent = s.checker;
     $("hintLabel").textContent = s.hintLabel;
 
+    $("titleKicker").textContent = s.motto;
     $("titleSub").textContent = s.subtitle;
     $("titleNote").textContent = s.disclaimer;
+    $("titleNeed").textContent = s.needAll;
     $("btnContinue").textContent = s.resume;
 
-    /* With a save on disk, Continue takes the lead and Start becomes
-     * the quieter "begin again" option. */
     const resumable = hasSave() && state.started;
     $("btnContinue").hidden = !resumable;
     $("btnStart").textContent = resumable ? s.newGame : s.start;
@@ -756,6 +868,7 @@
       state = freshState();
       state.lang = lang;
       state.sound = sound;
+      previouslyUnlocked = 0;
     }
     state.started = true;
     save();
@@ -763,6 +876,7 @@
     $("app").hidden = false;
     SCENES.clearParticles();
     render();
+    AUDIO.music(TRACK_FOR[view.scene] || "hub");
   }
 
   function hardReset() {
@@ -779,16 +893,12 @@
   function toggleLang() {
     state.lang = state.lang === "de" ? "en" : "de";
     save();
-    if (state.started) {
-      /* Re-render the current beat in the new language. */
-      render();
-    } else {
-      applyStaticText();
-    }
+    sfx("blip");
+    if (state.started) render(); else applyStaticText();
   }
 
-  $("btnStart").addEventListener("click", () => { Audio2.pick(); beginGame(true); });
-  $("btnContinue").addEventListener("click", () => { Audio2.pick(); beginGame(false); });
+  $("btnStart").addEventListener("click", () => { sfx("select"); beginGame(true); });
+  $("btnContinue").addEventListener("click", () => { sfx("select"); beginGame(false); });
   $("btnTitleLang").addEventListener("click", toggleLang);
   $("langBtn").addEventListener("click", toggleLang);
   $("restartBtn").addEventListener("click", () => {
@@ -797,17 +907,25 @@
   $("soundBtn").addEventListener("click", () => {
     state.sound = !state.sound;
     save();
+    AUDIO.setEnabled(state.sound);
     applyStaticText();
-    if (state.sound) Audio2.blip();
+    if (state.sound) {
+      sfx("select");
+      AUDIO.music(state.started ? (TRACK_FOR[view.scene] || "hub") : "title");
+    }
   });
   $("skipBtn").addEventListener("click", finishTyping);
   $("dialogueText").addEventListener("click", () => { if (typing) finishTyping(); });
+  /* Tapping anywhere on the title screen skips the cold start — not
+   * just the canvas, which the text block can cover on small screens. */
+  $("titleScreen").addEventListener("pointerdown", skipTitleIntro);
 
   document.addEventListener("keydown", (e) => {
     if (!state.started) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        beginGame(!hasSave());
+        if (titlePhase !== "ready") skipTitleIntro();
+        else beginGame(!hasSave());
       }
       return;
     }
@@ -832,7 +950,14 @@
 
   /* ------------------------------------------------------------------ */
   load();
+  AUDIO.setEnabled(state.sound);
   applyStaticText();
+  /* The facility only cold-starts once. If there is already a save on
+   * this device, go straight to the badge — nobody wants to watch the
+   * boot log every single visit, and the menu is unclickable until it
+   * has finished. */
+  if (REDUCED) skipTitleIntro();
+  else if (hasSave()) { titlePhase = "logo"; titleClock = 0; }
   requestAnimationFrame(loop);
 
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

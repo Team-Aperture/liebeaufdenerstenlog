@@ -11,7 +11,7 @@
  * ===================================================================== */
 "use strict";
 
-const CACHE = "liebe-auf-den-ersten-log-v2";
+const CACHE = "liebe-auf-den-ersten-log-v3";
 
 const ASSETS = [
   "./",
@@ -20,7 +20,10 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./icon.svg",
   "./js/coords.js",
+  "./js/audio.js",
   "./js/art.js",
+  "./js/hosts.js",
+  "./js/logo.js",
   "./js/scenes.js",
   "./js/story.js",
   "./js/game.js"
