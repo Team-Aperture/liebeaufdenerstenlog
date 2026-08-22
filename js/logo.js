@@ -245,7 +245,7 @@ window.LOGO = (function () {
     for (let y = 0; y < H; y += 8) px(ctx, 0, y, W, 1, "#0a1016");
     for (let x = 0; x < W; x += 8) px(ctx, x, 0, 1, H, "#0a1016");
 
-    const PER = 0.55;             /* seconds per line */
+    const PER = 0.30;             /* seconds per line */
     const shown = Math.min(lines.length, Math.floor(elapsed / PER) + 1);
     const y0 = 42;
 

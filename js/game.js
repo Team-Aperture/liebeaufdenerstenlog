@@ -72,7 +72,13 @@
   const view = { scene: "event", speaker: "units", weather: null, shake: 0 };
 
   /* Title screen phases: the facility boots, the badge assembles, then
-   * the menu appears. Clicking anywhere skips ahead. */
+   * the menu appears. Clicking anywhere skips ahead.
+   *
+   * `showingTitle` tracks the overlay itself. It deliberately does NOT
+   * key off state.started: loading a save sets that flag true, and the
+   * loop would then paint the hidden game canvas while the title screen
+   * sat in front of it, unpainted and with its menu never revealed. */
+  let showingTitle = true;
   let titlePhase = "boot";
   let titleClock = 0;
 
@@ -145,7 +151,10 @@
 
     SCENES.update(dt);
 
-    if (state.started) {
+    if (showingTitle) {
+      titleClock += dt;
+      renderTitle();
+    } else {
       SCENES.render(sctx, view.scene, {
         time: clock,
         speaker: view.speaker,
@@ -153,9 +162,6 @@
         shake: view.shake
       });
       drawPortrait(clock);
-    } else {
-      titleClock += dt;
-      renderTitle();
     }
     tickTypewriter(dt);
     tickGpsNoise();
@@ -189,7 +195,7 @@
       tctx.restore();
     }
 
-    if (titlePhase === "logo" && titleClock > 1.9) {
+    if (titlePhase === "logo" && titleClock > 1.5) {
       titlePhase = "ready";
       $("titleScreen").classList.add("ready");
     }
@@ -914,6 +920,7 @@
       previouslyUnlocked = 0;
     }
     state.started = true;
+    showingTitle = false;
     save();
     $("titleScreen").hidden = true;
     $("app").hidden = false;
@@ -1001,6 +1008,7 @@
    * has finished. */
   if (REDUCED) skipTitleIntro();
   else if (hasSave()) { titlePhase = "logo"; titleClock = 0; }
+  renderTitle();                 /* paint before the first frame lands */
   requestAnimationFrame(loop);
 
   /* A backgrounded tab still runs the audio scheduler even though
