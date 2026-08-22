@@ -111,6 +111,19 @@ body {
   text-shadow: 3px 3px 0 var(--pink-soft);
 }
 .title-sub { margin: 12px 0 0; font-size: 13px; line-height: 1.5; max-width: 46ch; }
+.title-need {
+  margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--deep);
+  border-left: 3px solid var(--gold); padding-left: 9px; max-width: 48ch;
+}
+
+/* The menu only fades in once the facility has finished booting. */
+.title-text > *:not(canvas) { transition: opacity .5s ease; }
+#titleScreen:not(.ready) .title-text > .kicker,
+#titleScreen:not(.ready) .title-text > h1,
+#titleScreen:not(.ready) .title-text > .title-sub,
+#titleScreen:not(.ready) .title-text > .title-need,
+#titleScreen:not(.ready) .title-text > .title-actions,
+#titleScreen:not(.ready) .title-text > .title-note { opacity: 0; pointer-events: none; }
 .title-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 .title-note { margin: 16px 0 0; font-size: 10px; line-height: 1.6; color: #7a5a72; max-width: 60ch; }
 
@@ -185,7 +198,21 @@ body {
   align-items: center;
 }
 .meter-row + .meter-row { margin-top: 4px; }
-.meter { height: 10px; background: #3b2941; border: 2px solid var(--ink); }
+.meter {
+  position: relative;
+  height: 10px; background: #3b2941; border: 2px solid var(--ink);
+}
+/* A tick showing what score this assessment needs to pass. */
+.meter::after {
+  content: "";
+  position: absolute;
+  top: -2px; bottom: -2px;
+  left: var(--goal, 50%);
+  width: 2px;
+  background: #fff8ec;
+  box-shadow: 0 0 0 1px #2b163088;
+  opacity: var(--goal-shown, 0);
+}
 .meter i {
   display: block;
   width: 0;
@@ -262,6 +289,18 @@ body {
 }
 #dialogueText .cursor { opacity: .6; }
 
+/* R-3MI speaks German and V-TGM speaks English, whatever language the
+ * interface is in; the translation rides underneath as a subtitle. */
+.dialogue-sub {
+  margin: -6px 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--pink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #7a5a72;
+  font-style: italic;
+}
+
 .choices { display: grid; gap: 7px; margin-top: auto; }
 .choice {
   display: grid;
@@ -324,6 +363,27 @@ body {
 .rank.gold   { background: var(--gold); }
 .rank.silver { background: #dfe3ea; }
 .rank.bronze { background: #d8a97e; }
+.score-line {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #6f4a68;
+  letter-spacing: .02em;
+}
+.unit-quip {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  background: #f2fbf4;
+  border-left: 3px solid #2ecf62;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.unit-quip-sub {
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  color: #6a8a74;
+  font-size: 11px;
+}
 .shard-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .shard {
   display: grid;

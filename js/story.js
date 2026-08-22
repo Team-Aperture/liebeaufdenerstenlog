@@ -4,6 +4,13 @@
  * Every piece of prose is a { de, en } pair. Nothing else in the code
  * base contains user-facing text, so translating the game means editing
  * this one file and nothing else.
+ *
+ * Two speakers are special, and follow Kalibrierungsanlage canon:
+ *   R-3MI speaks German, always. In English mode her line is shown in
+ *   German with an English subtitle underneath.
+ *   V-TGM speaks English, always, with a German subtitle in German mode.
+ * The engine reads `nativeLang` on the cast entry to decide which half
+ * of the pair is the spoken line and which is the subtitle.
  * ===================================================================== */
 "use strict";
 
@@ -13,10 +20,20 @@ window.STORY = (function () {
    * Cast
    * ------------------------------------------------------------------ */
   const chars = {
-    you:   { name: { de: "Du", en: "You" },       tint: "#ffd15c", sprite: "you" },
-    t4tc:  { name: { de: "T4-TC", en: "T4-TC" },  tint: "#ff8ab5", sprite: "t4tc" },
-    dnf:   { name: { de: "D-NF", en: "D-NF" },    tint: "#79c6c0", sprite: "dnf" },
-    bots:  { name: { de: "T4-TC & D-NF", en: "T4-TC & D-NF" }, tint: "#c3a8d8", sprite: "t4tc" },
+    you:   { name: { de: "Du", en: "You" }, tint: "#ffd15c", sprite: "you" },
+
+    /* The two units of the facility. Colours match KA-II's design system. */
+    r3mi: {
+      name: { de: "R-3MI", en: "R-3MI" }, tint: "#2ecf62",
+      host: "r3mi", nativeLang: "de"
+    },
+    vtgm: {
+      name: { de: "V-TGM", en: "V-TGM" }, tint: "#c0322c",
+      host: "vtgm", nativeLang: "en"
+    },
+    units: { name: { de: "R-3MI & V-TGM", en: "R-3MI & V-TGM" }, tint: "#c3a8d8", host: "r3mi" },
+    system: { name: { de: "ANLAGE", en: "FACILITY" }, tint: "#3a8fd4", system: true },
+
     petra: { name: { de: "Petra Petling", en: "Petra Petling" }, tint: "#3f8f5e", sprite: "petra" },
     nando: { name: { de: "Nando Nano", en: "Nando Nano" },       tint: "#7d8794", sprite: "nando" },
     mysti: { name: { de: "Mysti Fünf-Sterne", en: "Mysti Five-Star" }, tint: "#7a4fae", sprite: "mysti" }
@@ -26,31 +43,31 @@ window.STORY = (function () {
 
   const routeMeta = {
     petra: {
-      scene: "forest",
+      scene: "forest", track: "petra",
       tagline: {
         de: "Klassisch, wasserdicht, emotional leicht feucht.",
         en: "Classic, waterproof, emotionally a little damp."
       },
       dt: "D 1.5 / T 2.0",
-      size: { de: "Größe: normal", en: "Size: regular" }
+      spec: { de: "PRÜFKÖRPER 01", en: "TEST SUBJECT 01" }
     },
     nando: {
-      scene: "city",
+      scene: "city", track: "nando",
       tagline: {
         de: "Winzig, magnetisch, schwer zu greifen.",
         en: "Tiny, magnetic, hard to get hold of."
       },
       dt: "D 2.5 / T 1.5",
-      size: { de: "Größe: micro", en: "Size: micro" }
+      spec: { de: "PRÜFKÖRPER 02", en: "TEST SUBJECT 02" }
     },
     mysti: {
-      scene: "ruins",
+      scene: "ruins", track: "mysti",
       tagline: {
         de: "Kompliziert, rätselhaft, 47 Tabs offen.",
         en: "Complicated, cryptic, 47 tabs open."
       },
       dt: "D 5.0 / T 3.5",
-      size: { de: "Größe: unbekannt", en: "Size: unknown" }
+      spec: { de: "PRÜFKÖRPER 03", en: "TEST SUBJECT 03" }
     }
   };
 
@@ -59,25 +76,25 @@ window.STORY = (function () {
    * ------------------------------------------------------------------ */
   const ui = {
     de: {
-      subtitle: "Ein Geocaching-Datingspiel mit Final-Koordinaten",
-      start: "▶ Spiel starten",
+      facility: "DIE KALIBRIERUNGSANLAGE",
+      sector: "SEKTOR 12 - EMOTIONALE VERTRAEGLICHKEIT",
+      motto: "TESTEN. MESSEN. VERLIEBEN.",
+      subtitle: "Sektor 12 der Kalibrierungsanlage — mit Final-Koordinaten",
+      start: "▶ Prüfung beginnen",
       resume: "▶ Weiterspielen",
       newGame: "Neu anfangen",
       affection: "Zuneigung",
       logQuality: "Log-Qualität",
       restart: "↻ Neustart",
-      sound: "Ton",
-      on: "AN",
-      off: "AUS",
-      lang: "EN",
-      hint: "Antwort antippen oder Tasten 1–3. Enter = weiter.",
+      on: "AN", off: "AUS", lang: "EN",
+      hint: "Antwort antippen oder Tasten 1–4. Enter = weiter.",
       continue: "Weiter",
       saved: "Fortschritt wird lokal gespeichert",
       confirm: "Wirklich alles löschen und neu anfangen?",
       gpsTitle: "FINAL-KOORDINATEN",
       gpsSearching: "Suche Satelliten …",
       gpsLocked: "POSITION FIXIERT",
-      gpsSubtitle: "Jedes gelungene Date gibt einen Teil frei.",
+      gpsSubtitle: "Jede bestandene Prüfung gibt einen Teil frei.",
       posted: "Listing-Koordinaten",
       checksum: "Quersumme aller Ziffern",
       copy: "Koordinaten kopieren",
@@ -86,47 +103,54 @@ window.STORY = (function () {
       checker: "Lösung prüfen",
       hintLabel: "Hinweis (ROT13)",
       distance: "Entfernung vom Listing",
-      hub: "Wen datest du als Nächstes?",
-      hubSub: "Drei Caches. Drei Herzen. Zehn Ziffern.",
+      hub: "Welchen Prüfkörper nimmst du dir als Nächstes vor?",
+      hubSub: "Drei Prüfungen. Drei Herzen. Zehn Ziffern.",
       statusOpen: "offen",
-      statusGold: "★ GOLD — Ziffern gesichert",
-      statusSilver: "SILBER — nochmal versuchen",
-      statusBronze: "DNF — nochmal versuchen",
-      replay: "Date wiederholen",
+      statusGold: "★ BESTANDEN — Ziffern gesichert",
+      statusSilver: "KNAPP DANEBEN — nochmal",
+      statusBronze: "DURCHGEFALLEN — nochmal",
+      replay: "Prüfung wiederholen",
       goFinal: "Zum Final",
-      rank: "WERTUNG",
+      rank: "PRÜFPROTOKOLL",
       shardWon: "ZIFFERN FREIGESCHALTET",
       shardLost: "KEINE ZIFFERN",
-      backToHub: "Zurück zur Event-Wiese",
-      yourLog: "Dein Log-Eintrag",
+      backToHub: "Zurück zur Anlage",
       copyLog: "Log kopieren",
       endingTitle: "GEFUNDEN",
-      cacheOwner: "Owner",
       disclaimer: "Inoffizielles, nicht-kommerzielles Fanprojekt. Nicht mit Geocaching HQ / Groundspeak verbunden. Alle Figuren sind erfunden. Bitte verantwortungsvoll cachen und die Muggel nicht füttern.",
       offlineReady: "Offline spielbar",
       skip: "Text sofort anzeigen",
-      routeDone: "erledigt"
+      music: "Musik",
+      bootLines: [
+        "KALIBRIERUNGSANLAGE - KALTSTART",
+        "SEKTOR 12 ... EMOTIONALE VERTRAEGLICHKEIT",
+        "PRUEFKOERPER 01 / 02 / 03 ... ONLINE",
+        "MOBILE EINHEITEN ... R-3MI, V-TGM",
+        "ZERTIFIZIERUNG 7C ... GUELTIG",
+        "SEKTOR 12 ENTSPERRT."
+      ],
+      needAll: "Alle drei Prüfungen bestehen, dann rastet das GPS ein."
     },
     en: {
-      subtitle: "A geocaching dating sim that hands you the final coordinates",
-      start: "▶ Start game",
+      facility: "DIE KALIBRIERUNGSANLAGE",
+      sector: "SECTOR 12 - EMOTIONAL COMPATIBILITY",
+      motto: "TESTEN. MESSEN. VERLIEBEN.",
+      subtitle: "Sector 12 of the Calibration Facility — with final coordinates",
+      start: "▶ Begin assessment",
       resume: "▶ Continue",
       newGame: "Start over",
       affection: "Affection",
       logQuality: "Log quality",
       restart: "↻ Restart",
-      sound: "Sound",
-      on: "ON",
-      off: "OFF",
-      lang: "DE",
-      hint: "Tap an answer or press 1–3. Enter to advance.",
+      on: "ON", off: "OFF", lang: "DE",
+      hint: "Tap an answer or press 1–4. Enter to advance.",
       continue: "Continue",
       saved: "Progress is saved on this device",
       confirm: "Erase everything and start over?",
       gpsTitle: "FINAL COORDINATES",
       gpsSearching: "Acquiring satellites …",
       gpsLocked: "POSITION LOCKED",
-      gpsSubtitle: "Every date that goes well releases a piece.",
+      gpsSubtitle: "Every assessment you pass releases a piece.",
       posted: "Posted coordinates",
       checksum: "Cross-sum of all digits",
       copy: "Copy coordinates",
@@ -135,26 +159,33 @@ window.STORY = (function () {
       checker: "Check solution",
       hintLabel: "Hint (ROT13)",
       distance: "Distance from posted",
-      hub: "Who are you dating next?",
-      hubSub: "Three caches. Three hearts. Ten digits.",
+      hub: "Which test subject are you taking on next?",
+      hubSub: "Three assessments. Three hearts. Ten digits.",
       statusOpen: "open",
-      statusGold: "★ GOLD — digits secured",
-      statusSilver: "SILVER — try again",
-      statusBronze: "DNF — try again",
-      replay: "Redo this date",
+      statusGold: "★ PASSED — digits secured",
+      statusSilver: "NEAR MISS — try again",
+      statusBronze: "FAILED — try again",
+      replay: "Retake this assessment",
       goFinal: "To the final",
-      rank: "RATING",
+      rank: "ASSESSMENT RECORD",
       shardWon: "DIGITS UNLOCKED",
       shardLost: "NO DIGITS",
-      backToHub: "Back to the event field",
-      yourLog: "Your log entry",
+      backToHub: "Back to the facility",
       copyLog: "Copy log",
       endingTitle: "FOUND IT",
-      cacheOwner: "Owner",
       disclaimer: "Unofficial, non-commercial fan project. Not affiliated with Geocaching HQ / Groundspeak. All characters are fictional. Please cache responsibly and do not feed the Muggles.",
       offlineReady: "Playable offline",
       skip: "Show full text",
-      routeDone: "done"
+      music: "Music",
+      bootLines: [
+        "CALIBRATION FACILITY - COLD START",
+        "SECTOR 12 ... EMOTIONAL COMPATIBILITY",
+        "TEST SUBJECTS 01 / 02 / 03 ... ONLINE",
+        "MOBILE UNITS ... R-3MI, V-TGM",
+        "CERTIFICATION 7C ... VALID",
+        "SECTOR 12 UNLOCKED."
+      ],
+      needAll: "Pass all three assessments and the GPSr locks on."
     }
   };
 
@@ -164,321 +195,545 @@ window.STORY = (function () {
    * Node shape:
    *   who      speaker key
    *   scene    backdrop id
-   *   weather  "rain" | "muggle" | undefined
-   *   fx       "hearts" | "sparks" | "thorns" | "shake"
+   *   weather  "rain" | "muggle" | "night"
+   *   fx       "hearts" | "sparks" | "thorns" | "shake" | "glitch"
+   *   r3mi     "expression/pose" for the green unit on this beat
+   *   vtgm     "expression/pose" for the red unit on this beat
+   *   emote    { who, kind } floating symbol
    *   text     { de, en }
    *   next     id for a plain Continue
-   *   choices  [{ t:{de,en}, to, aff, log, fx }]
-   *   route    marks this node as part of a date route
-   *   end      route id — finish the route and score it
+   *   choices  [{ t:{de,en}, to, aff, log, fx, right }]
+   *   quiz     true — this beat has exactly one correct answer
+   *   route    marks this node as part of an assessment
+   *   end      route id — finish the assessment and score it
    * ------------------------------------------------------------------ */
   const nodes = {
 
     /* ================= PROLOGUE ================= */
     pro1: {
-      who: "t4tc", scene: "event",
+      who: "system", scene: "event", fx: "glitch",
+      r3mi: "neutral/idle", vtgm: "neutral/idle",
       text: {
-        de: "Willkommen beim Mega-Event „Liebe auf den ersten Log“! Ich bin T4-TC, dein Kommentator-Drohnchen, und ich finde ALLES großartig!",
-        en: "Welcome to the “Love at First Log” mega-event! I'm T4-TC, your commentary drone, and I think EVERYTHING is wonderful!"
+        de: "SEKTOR 12 — EMOTIONALE VERTRÄGLICHKEIT. LETZTE KALIBRIERUNG: VOR SEHR LANGER ZEIT. BESUCHER ERKANNT.",
+        en: "SECTOR 12 — EMOTIONAL COMPATIBILITY. LAST CALIBRATION: A VERY LONG TIME AGO. VISITOR DETECTED."
       },
       next: "pro2"
     },
     pro2: {
-      who: "dnf", scene: "event",
+      who: "r3mi", scene: "event", r3mi: "happy/cheer", vtgm: "suspicious/idle",
+      emote: { who: "r3mi", kind: "sparkle" },
       text: {
-        de: "Und ich bin D-NF. Ich habe 4.112 Fehlversuche geloggt und null Beziehungen. Statistisch gesehen findest du heute nichts.",
-        en: "And I'm D-NF. I have logged 4,112 did-not-finds and zero relationships. Statistically, you will find nothing today."
+        de: "„Oh! Ein Besucher! In Sektor 12! Weißt du, wie lange ich auf einen Besucher in Sektor 12 gewartet habe?“",
+        en: "“Oh! A visitor! In Sector 12! Do you know how long I have been waiting for a visitor in Sector 12?”"
       },
       next: "pro3"
     },
     pro3: {
-      who: "t4tc", scene: "event",
+      who: "vtgm", scene: "event", r3mi: "happy/present", vtgm: "annoyed/crossed",
       text: {
-        de: "Ignorier ihn. Der Deal: drei Caches, drei Herzen. Jedes Date, das richtig gut läuft, gibt dir einen Teil der Final-Koordinaten. Alle drei — und dein GPS rastet ein.",
-        en: "Ignore him. Here's the deal: three caches, three hearts. Every date that goes really well hands you a piece of the final coordinates. All three, and your GPSr locks on."
+        de: "Sektor 12 sollte nie wieder hochgefahren werden.",
+        en: "Sector 12 was never meant to come back online."
       },
       next: "pro4"
     },
     pro4: {
-      who: "dnf", scene: "event",
+      who: "r3mi", scene: "event", r3mi: "curious/point", vtgm: "annoyed/crossed",
       text: {
-        de: "Zur Klarstellung: Du musst mit allen dreien ausgehen. Parallel. Die Community wird das in den Logs diskutieren.",
-        en: "For clarity: you must date all three. Concurrently. The community will discuss this in the logs."
+        de: "„Details. — Also: Das hier ist die Verträglichkeitsprüfung. Wir haben drei Prüfkörper. Du bist das Messgerät.“",
+        en: "“Details. — Anyway: this is the compatibility assessment. We have three test subjects. You are the instrument.”"
       },
       next: "pro5"
     },
     pro5: {
-      who: "t4tc", scene: "event", fx: "hearts",
+      who: "vtgm", scene: "event", r3mi: "happy/idle", vtgm: "neutral/idle",
       text: {
-        de: "Das nennt man einen Multi. Ab dafür!",
-        en: "That's called a multi-cache. Off you go!"
+        de: "Es sind Dosen. Uns ist bewusst, wie das klingt.",
+        en: "They are containers. We are aware of how that sounds."
+      },
+      next: "pro6"
+    },
+    pro6: {
+      who: "r3mi", scene: "event", r3mi: "happy/cheer", vtgm: "neutral/idle",
+      emote: { who: "r3mi", kind: "heart" },
+      text: {
+        de: "„Jede Prüfung, die du bestehst, gibt einen Teil der Final-Koordinaten frei. Alle drei — und dein GPS rastet ein!“",
+        en: "“Every assessment you pass releases part of the final coordinates. All three, and your GPSr locks on!”"
+      },
+      next: "pro7"
+    },
+    pro7: {
+      who: "vtgm", scene: "event", r3mi: "happy/idle", vtgm: "neutral/point",
+      text: {
+        de: "Bestehen heißt bestehen. Nett sein reicht nicht. Wir messen auch, was du ins Logbuch schreibst.",
+        en: "Passing means passing. Being nice is not enough. We also measure what you write in the logbook."
+      },
+      next: "pro8"
+    },
+    pro8: {
+      who: "r3mi", scene: "event", r3mi: "proud/hips", vtgm: "annoyed/crossed",
+      emote: { who: "vtgm", kind: "anger" },
+      text: {
+        de: "„Und du musst alle drei daten. Gleichzeitig. Das nennt man einen Multi!“",
+        en: "“And you have to date all three. Concurrently. That's called a multi-cache!”"
+      },
+      next: "pro9"
+    },
+    pro9: {
+      who: "vtgm", scene: "event", r3mi: "happy/idle", vtgm: "annoyed/crossed",
+      text: {
+        de: "Das bedeutet das nicht.",
+        en: "That is not what that means."
       },
       next: "hub"
     },
 
-    /* The hub is generated at runtime — see game.js. */
-    hub: { hub: true, scene: "event", who: "bots" },
+    hub: { hub: true, scene: "event", who: "units" },
 
-    /* ================= PETRA — the forest ================= */
+    /* ================= PETRA — PRÜFKÖRPER 01 ================= */
     pe1: {
       route: "petra", who: "petra", scene: "forest",
+      r3mi: "happy/present", vtgm: "neutral/idle",
       text: {
-        de: "Du findest Petra unter einer sehr romantischen Eiche. Sie hält einen Petling hoch, aus dem Wasser läuft. „Hallo! Mein Logbuch ist ein Smoothie.“",
-        en: "You find Petra beneath a very romantic oak. She holds up a petling with water running out of it. “Hi! My logbook is a smoothie.”"
+        de: "Petra steht unter einer sehr romantischen Eiche und hält einen Petling hoch, aus dem Wasser läuft. „Hallo! Mein Logbuch ist ein Smoothie. Diese Dose liegt hier seit 2007. Unter genau dieser Eiche.“",
+        en: "Petra stands beneath a very romantic oak, holding up a petling with water running out of it. “Hi! My logbook is a smoothie. This container has been here since 2007. Under this exact oak.”"
       },
       choices: [
-        { t: { de: "Wartungsset zücken. Trockenes Logbuch, neuer O-Ring, frischer Bleistift.", en: "Produce a maintenance kit. Dry logbook, new O-ring, fresh pencil." }, to: "pe2a", aff: 2, log: 2, fx: "hearts" },
-        { t: { de: "„TFTC.“ Und weitergehen.", en: "“TFTC.” And walk on." }, to: "pe2b", aff: -1, log: -2 },
-        { t: { de: "Den Kassenbon von 2019 als Tauschgegenstand loben.", en: "Praise the 2019 receipt as excellent swag." }, to: "pe2c", aff: 1, log: 0 }
+        { t: { de: "Wartungsset zücken. Trockenes Logbuch, neuer O-Ring, frischer Bleistift.", en: "Produce a maintenance kit. Dry logbook, new O-ring, fresh pencil." }, to: "pe1a", aff: 2, log: 2, fx: "hearts" },
+        { t: { de: "„2007? Da war ich noch nicht mal angemeldet.“", en: "“2007? I hadn't even signed up back then.”" }, to: "pe1b", aff: 1, log: 1 },
+        { t: { de: "„TFTC.“ Und weitergehen.", en: "“TFTC.” And walk on." }, to: "pe1c", aff: -2, log: -2 }
       ]
     },
-    pe2a: {
-      route: "petra", who: "petra", scene: "forest",
+    pe1a: {
+      route: "petra", who: "petra", scene: "forest", r3mi: "happy/cheer", vtgm: "neutral/idle",
+      emote: { who: "petra", kind: "heart" },
       text: {
-        de: "Petra sieht dich an, wie andere Leute Sonnenuntergänge ansehen. „Du hast einen ERSATZ-O-RING dabei.“ — „Zwei“, sagst du. Irgendwo in den Bäumen fällt D-NF ein Rotor ab.",
-        en: "Petra looks at you the way other people look at sunsets. “You are carrying a SPARE O-RING.” “Two,” you say. Somewhere in the trees, D-NF drops a rotor."
+        de: "Petra sieht dich an, wie andere Leute Sonnenuntergänge ansehen. „Du hast einen ERSATZ-O-RING dabei.“ — „Zwei“, sagst du. Irgendwo in den Bäumen macht R-3MI ein Geräusch wie ein zerknautschtes Herz.",
+        en: "Petra looks at you the way other people look at sunsets. “You are carrying a SPARE O-RING.” “Two,” you say. Somewhere in the trees, R-3MI makes a noise like a crumpling heart."
       },
-      next: "pe3"
+      next: "pe2"
     },
-    pe2b: {
-      route: "petra", who: "dnf", scene: "forest",
+    pe1b: {
+      route: "petra", who: "petra", scene: "forest", r3mi: "curious/think", vtgm: "neutral/idle",
       text: {
-        de: "D-NF: „Log geschrieben: TFTC. Vier Zeichen. Ich habe es archiviert. Im Herzen ebenfalls.“ T4-TC weint sehr leise Kühlflüssigkeit.",
-        en: "D-NF: “Log written: TFTC. Four characters. I have archived it. Also emotionally.” T4-TC quietly weeps coolant."
+        de: "„2007“, sagt Petra versonnen. „Damals waren die Hinweise noch ehrlich und die Dosen noch groß.“ Sie klopft auf die Eiche wie auf eine alte Kollegin.",
+        en: "“2007,” Petra says wistfully. “Back then the hints were honest and the containers were big.” She pats the oak like an old colleague."
       },
-      next: "pe3"
+      next: "pe2"
     },
-    pe2c: {
-      route: "petra", who: "petra", scene: "forest",
+    pe1c: {
+      route: "petra", who: "vtgm", scene: "forest", r3mi: "sad/slump", vtgm: "annoyed/crossed",
+      emote: { who: "r3mi", kind: "sweat" },
       text: {
-        de: "„Ein Kassenbon“, sagt Petra andächtig. „Von 2019. Für einen Kaffee. Manche nennen das Müll. Ich nenne es einen Trackable ohne Ambitionen.“",
-        en: "“A receipt,” Petra says reverently. “From 2019. For a coffee. Some people call that litter. I call it a trackable with no ambition.”"
+        de: "Log geschrieben: TFTC. Vier Zeichen. Ich habe es archiviert. Emotional ebenfalls.",
+        en: "Log written: TFTC. Four characters. I have archived it. Emotionally as well."
       },
-      next: "pe3"
+      next: "pe2"
+    },
+    pe2: {
+      route: "petra", who: "petra", scene: "forest", r3mi: "neutral/idle", vtgm: "neutral/idle",
+      text: {
+        de: "Sie schraubt den Deckel auf und zieht ein aufgeweichtes Stück Papier heraus. „Und eine Regel habe ich: Ich logge nie mit Kugelschreiber. Nie. Kugelschreiber ist ein Verbrechen an nassem Papier.“",
+        en: "She unscrews the lid and pulls out a sodden scrap of paper. “And I have one rule: I never log in ballpoint. Never. Ballpoint is a crime against wet paper.”"
+      },
+      choices: [
+        { t: { de: "„Bleistift überlebt alles. Sogar Beziehungen.“", en: "“Pencil survives everything. Even relationships.”" }, to: "pe3", aff: 2, log: 2, fx: "hearts" },
+        { t: { de: "Zustimmend nicken und nichts sagen.", en: "Nod in agreement and say nothing." }, to: "pe3", aff: 1, log: 0 },
+        { t: { de: "„Ich logge eigentlich nur noch digital.“", en: "“I only really log digitally these days.”" }, to: "pe3", aff: -1, log: -1 }
+      ]
     },
     pe3: {
-      route: "petra", who: "bots", scene: "forest", weather: "muggle",
+      route: "petra", who: "petra", scene: "forest", quiz: true,
+      r3mi: "curious/point", vtgm: "neutral/point",
+      text: {
+        de: "„Prüfungsfrage“, sagt Petra fröhlich. „Du findest diese Dose. Logbuch durchweicht, Deckel gerissen, Dose aber da. Was loggst du?“",
+        en: "“Assessment question,” Petra says cheerfully. “You find this container. Logbook soaked, lid cracked, but the container is there. What do you log?”"
+      },
+      choices: [
+        { t: { de: "„Found it“ — plus „Needs Maintenance“ für den Owner.", en: "“Found it” — plus a “Needs Maintenance” for the owner." }, to: "pe3a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "„Needs Archived“. Ist doch kaputt.", en: "“Needs Archived”. It's broken, isn't it." }, to: "pe3b", aff: -1, log: -2 },
+        { t: { de: "Nur „Write Note“, um niemanden zu ärgern.", en: "Just a “Write Note”, so nobody gets upset." }, to: "pe3b", aff: 0, log: 0 },
+        { t: { de: "„DNF“ — das zählt so nicht.", en: "“DNF” — that doesn't really count." }, to: "pe3b", aff: 0, log: -1 }
+      ]
+    },
+    pe3a: {
+      route: "petra", who: "r3mi", scene: "forest", r3mi: "proud/hips", vtgm: "happy/idle",
+      emote: { who: "r3mi", kind: "sparkle" },
+      text: {
+        de: "„RICHTIG! Found it plus NM! Gefunden ist gefunden, und der Owner erfährt trotzdem, dass der Deckel hin ist. Ich notiere: sehr gutes Sozialverhalten.“",
+        en: "“CORRECT! Found it plus NM! A find is a find, and the owner still learns the lid is done for. I am recording: excellent social conduct.”"
+      },
+      next: "pe4"
+    },
+    pe3b: {
+      route: "petra", who: "vtgm", scene: "forest", r3mi: "sad/slump", vtgm: "annoyed/crossed",
+      emote: { who: "vtgm", kind: "anger" },
+      text: {
+        de: "Falsch. Ein Fund bleibt ein Fund. Der Owner braucht die Information, nicht die Bestrafung. Notiert.",
+        en: "Wrong. A find is still a find. The owner needs the information, not the punishment. Noted."
+      },
+      next: "pe4"
+    },
+    pe4: {
+      route: "petra", who: "units", scene: "forest", weather: "muggle",
+      r3mi: "panic/panic", vtgm: "suspicious/point",
+      emote: { who: "r3mi", kind: "bang" },
       text: {
         de: "Ein Muggel mit Hund biegt um die Eiche. Der Hund hat euch schon gefunden. Der Muggel hat noch Hoffnung.",
         en: "A Muggle with a dog comes round the oak. The dog has already found you. The Muggle still has hope."
       },
       choices: [
-        { t: { de: "Den Baum umarmen. Völlig normale Freizeitgestaltung.", en: "Hug the tree. A completely normal hobby." }, to: "pe4a", aff: 2, log: 1 },
-        { t: { de: "Laut rufen: „Ich suche nur mein WLAN!“", en: "Shout: “I'm only looking for my Wi-Fi!”" }, to: "pe4b", aff: 1, log: 0 },
-        { t: { de: "Petra vorschieben und „Pilze!“ rufen.", en: "Push Petra forward and yell “Mushrooms!”" }, to: "pe4c", aff: -1, log: 0 }
+        { t: { de: "Den Baum umarmen. Völlig normale Freizeitgestaltung.", en: "Hug the tree. A completely normal hobby." }, to: "pe5", aff: 2, log: 1 },
+        { t: { de: "Laut rufen: „Ich suche nur mein WLAN!“", en: "Shout: “I'm only looking for my Wi-Fi!”" }, to: "pe5", aff: 1, log: 0 },
+        { t: { de: "Petra vorschieben und „Pilze!“ rufen.", en: "Push Petra forward and yell “Mushrooms!”" }, to: "pe5", aff: -2, log: 0 }
       ]
-    },
-    pe4a: {
-      route: "petra", who: "petra", scene: "forest", weather: "muggle",
-      text: {
-        de: "Ihr umarmt beide den Baum. Der Muggel nickt respektvoll und geht weiter. Der Hund bleibt. Der Hund weiß Bescheid. Der Hund war schon immer FTF.",
-        en: "You both hug the tree. The Muggle nods respectfully and moves on. The dog stays. The dog knows. The dog has always been FTF."
-      },
-      next: "pe5"
-    },
-    pe4b: {
-      route: "petra", who: "bots", scene: "forest", weather: "muggle",
-      text: {
-        de: "Der Muggel zeigt dir wortlos die volle Netzabdeckung auf seinem Handy. Petra flüstert: „Das war mutig und komplett falsch, und ich mag beides.“",
-        en: "The Muggle silently shows you the full signal bars on his phone. Petra whispers: “That was brave and completely wrong, and I like both.”"
-      },
-      next: "pe5"
-    },
-    pe4c: {
-      route: "petra", who: "petra", scene: "forest", weather: "muggle",
-      text: {
-        de: "Petra hält dem Muggel eine zwanzigminütige Vorlesung über Pilze, die sie sich vollständig ausdenkt. Der Muggel geht beeindruckt. Petra sieht dich an. „Nie wieder.“",
-        en: "Petra gives the Muggle a twenty-minute lecture on mushrooms that she invents entirely. The Muggle leaves impressed. Petra looks at you. “Never again.”"
-      },
-      next: "pe5"
     },
     pe5: {
-      route: "petra", who: "petra", scene: "forest", weather: "rain",
+      route: "petra", who: "petra", scene: "forest", weather: "rain", fx: "shake",
+      r3mi: "panic/panic", vtgm: "annoyed/idle",
       text: {
-        de: "Es fängt an zu regnen. Natürlich. Das trockene Logbuch liegt offen auf dem Stein.",
-        en: "It starts to rain. Of course it does. The dry logbook is lying open on the rock."
+        de: "Es fängt an zu regnen. Natürlich. Petra durchsucht ihre Taschen und wird blass: „Mein Stift. Ich habe meinen Stift im Auto gelassen.“ Sie sieht dich an. Du hast vier Dinge dabei.",
+        en: "It starts to rain. Of course it does. Petra searches her pockets and goes pale: “My pen. I left my pen in the car.” She looks at you. You have four things on you."
       },
+      quiz: true,
       choices: [
-        { t: { de: "Die eigene Jacke drüber. Du bist ohnehin schon nass.", en: "Own jacket over it. You're soaked anyway." }, to: "pe6", aff: 2, log: 1, fx: "hearts" },
-        { t: { de: "Zip-Beutel. Ich habe immer einen Zip-Beutel.", en: "Zip bag. I always have a zip bag." }, to: "pe6", aff: 1, log: 2 },
-        { t: { de: "Mit Kugelschreiber loggen. Der verläuft ja nicht … oh.", en: "Log it in ballpoint. That doesn't run … oh." }, to: "pe6", aff: 0, log: -1 }
+        { t: { de: "Den Bleistift.", en: "The pencil." }, to: "pe5a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "Den Kugelschreiber.", en: "The ballpoint pen." }, to: "pe5b", aff: -2, log: -1 },
+        { t: { de: "Den Permanentmarker.", en: "The permanent marker." }, to: "pe5b", aff: 0, log: 0 },
+        { t: { de: "Das Handy — „diktier's mir einfach“.", en: "Your phone — “just dictate it to me”." }, to: "pe5b", aff: 0, log: -1 }
       ]
+    },
+    pe5a: {
+      route: "petra", who: "petra", scene: "forest", weather: "rain",
+      r3mi: "happy/cheer", vtgm: "happy/idle",
+      emote: { who: "petra", kind: "heart" },
+      text: {
+        de: "Sie nimmt den Bleistift, ohne hinzusehen. „Du hast zugehört.“ — „Du hast es zwanzig Minuten lang gesagt.“ — „Die meisten hören trotzdem nicht zu.“ Der Regen wird kurz sehr unwichtig.",
+        en: "She takes the pencil without looking. “You listened.” “You said it for twenty minutes.” “Most people still don't listen.” The rain briefly becomes very unimportant."
+      },
+      next: "pe6"
+    },
+    pe5b: {
+      route: "petra", who: "vtgm", scene: "forest", weather: "rain",
+      r3mi: "sad/slump", vtgm: "suspicious/crossed",
+      text: {
+        de: "Sie hat dir ihre einzige Regel vor vier Minuten gesagt. Ich habe mitgeschrieben. Das gehört zu meinen Aufgaben.",
+        en: "She told you her one rule four minutes ago. I wrote it down. That is part of my function."
+      },
+      next: "pe6"
     },
     pe6: {
       route: "petra", who: "petra", scene: "forest", weather: "rain",
-      end: "petra",
+      r3mi: "neutral/idle", vtgm: "neutral/idle",
+      text: {
+        de: "Das Logbuch liegt offen auf dem Stein und der Regen wird ernster.",
+        en: "The logbook is lying open on the rock and the rain is getting serious."
+      },
+      choices: [
+        { t: { de: "Die eigene Jacke drüber. Du bist ohnehin schon nass.", en: "Own jacket over it. You're soaked anyway." }, to: "pe7", aff: 2, log: 1, fx: "hearts" },
+        { t: { de: "Zip-Beutel. Ich habe immer einen Zip-Beutel.", en: "Zip bag. I always have a zip bag." }, to: "pe7", aff: 1, log: 2 },
+        { t: { de: "Zuklappen und hoffen.", en: "Close it and hope." }, to: "pe7", aff: 0, log: -1 }
+      ]
+    },
+    pe7: {
+      route: "petra", who: "petra", scene: "forest", weather: "rain", end: "petra",
+      r3mi: "happy/idle", vtgm: "neutral/idle",
       text: {
         de: "Ihr steht unter der Eiche: zwei nasse Menschen und eine trockene Dose.",
         en: "You stand under the oak: two soaked humans and one dry container."
       }
     },
 
-    /* ================= NANDO — the city ================= */
+    /* ================= NANDO — PRÜFKÖRPER 02 ================= */
     na1: {
       route: "nando", who: "nando", scene: "city",
+      r3mi: "curious/point", vtgm: "neutral/idle",
       text: {
-        de: "Nando hängt magnetisch hinter einem Verkehrsschild. „Hi. Ich bin im echten Leben kleiner als auf dem Profilbild.“ Er ist vier Zentimeter.",
-        en: "Nando is stuck magnetically behind a road sign. “Hi. I'm smaller in real life than in my profile picture.” He is four centimetres."
+        de: "Nando hängt magnetisch hinter einem Verkehrsschild. „Hi. Ich bin im echten Leben kleiner als auf dem Profilbild.“ Er ist vier Zentimeter. „Ich hänge hier seit 2011. Und eine Bitte vorweg: Fass mich nicht an. Benutz den Spiegel.“",
+        en: "Nando is stuck magnetically behind a road sign. “Hi. I'm smaller in real life than in my profile picture.” He is four centimetres. “I've been here since 2011. And one request up front: don't grab me. Use the mirror.”"
       },
       choices: [
-        { t: { de: "„Größe ist auch nur eine D/T-Wertung.“", en: "“Size is just another D/T rating.”" }, to: "na2a", aff: 2, log: 1, fx: "hearts" },
-        { t: { de: "Bolzenschneider zücken. Als Kompliment gemeint.", en: "Produce bolt cutters. Meant as a compliment." }, to: "na2b", aff: -2, log: -1 },
-        { t: { de: "Mit einem Inspektionsspiegel diskret suchen.", en: "Search discreetly with an inspection mirror." }, to: "na2c", aff: 1, log: 2 }
+        { t: { de: "Sofort den Inspektionsspiegel auspacken.", en: "Get the inspection mirror out straight away." }, to: "na1a", aff: 2, log: 2, fx: "hearts" },
+        { t: { de: "„Größe ist auch nur eine D/T-Wertung.“", en: "“Size is just another D/T rating.”" }, to: "na1b", aff: 2, log: 1 },
+        { t: { de: "Bolzenschneider zücken. Als Kompliment gemeint.", en: "Produce bolt cutters. Meant as a compliment." }, to: "na1c", aff: -2, log: -2 }
       ]
     },
-    na2a: {
-      route: "nando", who: "nando", scene: "city",
+    na1a: {
+      route: "nando", who: "nando", scene: "city", r3mi: "happy/cheer", vtgm: "happy/idle",
+      emote: { who: "nando", kind: "sparkle" },
       text: {
-        de: "Nando schweigt kurz. „Weißt du, wie oft ich das höre?“ — „Oft?“ — „Nie. Kein einziges Mal. Leute sagen ‚ach, DAS ist der Cache‘ und klingen dabei enttäuscht.“",
+        de: "„Ein Spiegel“, sagt Nando andächtig. „Kein Abtasten, kein Gezerre, keine beschädigte Halterung. Du bist der erste Mensch seit Mai, der mich nicht angefasst hat wie ein Kaugummi.“",
+        en: "“A mirror,” Nando says reverently. “No groping, no yanking, no damaged mount. You are the first person since May who has not handled me like chewing gum.”"
+      },
+      next: "na2"
+    },
+    na1b: {
+      route: "nando", who: "nando", scene: "city", r3mi: "happy/idle", vtgm: "neutral/idle",
+      text: {
+        de: "Nando schweigt kurz. „Weißt du, wie oft ich das höre?“ — „Oft?“ — „Nie. Kein einziges Mal. Die Leute sagen ‚ach, DAS ist der Cache‘ und klingen dabei enttäuscht.“",
         en: "Nando goes quiet. “Do you know how often I hear that?” “Often?” “Never. Not once. People say ‘oh, THAT'S the cache' in a distinctly disappointed voice.”"
       },
-      next: "na3"
+      next: "na2"
     },
-    na2b: {
-      route: "nando", who: "dnf", scene: "city",
+    na1c: {
+      route: "nando", who: "vtgm", scene: "city", r3mi: "panic/panic", vtgm: "annoyed/crossed",
+      emote: { who: "vtgm", kind: "anger" },
       text: {
-        de: "D-NF: „Ich muss dich darauf hinweisen, dass Werkzeuge nur nötig sind, wenn der Owner es im Listing erlaubt.“ T4-TC: „Und dass man Dates nicht aufschneidet!“",
-        en: "D-NF: “I must point out that tools are only appropriate if the listing says so.” T4-TC: “And that you do not cut open your date!”"
+        de: "Werkzeug ist nur zulässig, wenn das Listing es erlaubt. Und man schneidet sein Date nicht auf. Das steht in keiner Richtlinie, weil niemand dachte, dass es nötig wäre.",
+        en: "Tools are only appropriate if the listing says so. And you do not cut open your date. That is in no guideline, because nobody thought it would be necessary."
       },
-      next: "na3"
+      next: "na2"
     },
-    na2c: {
-      route: "nando", who: "nando", scene: "city",
+    na2: {
+      route: "nando", who: "nando", scene: "city", r3mi: "neutral/idle", vtgm: "neutral/idle",
       text: {
-        de: "„Ein Spiegel“, sagt Nando anerkennend. „Kein Abtasten, kein Gezerre, keine beschädigte Halterung. Du bist der erste Mensch seit Mai, der mich nicht angefasst hat wie ein Kaugummi.“",
-        en: "“A mirror,” says Nando approvingly. “No groping, no yanking, no damaged mount. You are the first person since May who did not handle me like chewing gum.”"
+        de: "„Das Schlimmste“, sagt Nando, „sind die Logs. ‚Schnell gefunden, TN.‘ Zwölf Jahre stehe ich hier und bekomme drei Buchstaben.“",
+        en: "“The worst part,” Nando says, “is the logs. ‘Quick find, TN.' Twelve years I've been here and I get three letters.”"
       },
-      next: "na3"
+      choices: [
+        { t: { de: "„Ich schreibe dir einen Log mit Absätzen.“", en: "“I'll write you a log with paragraphs.”" }, to: "na3", aff: 2, log: 2, fx: "hearts" },
+        { t: { de: "„Immerhin haben sie geloggt.“", en: "“At least they logged at all.”" }, to: "na3", aff: 0, log: 1 },
+        { t: { de: "„Ehrlich gesagt logge ich auch meistens TFTC.“", en: "“Honestly, I mostly log TFTC too.”" }, to: "na3", aff: -1, log: -1 }
+      ]
     },
     na3: {
-      route: "nando", who: "bots", scene: "city",
+      route: "nando", who: "nando", scene: "city", quiz: true,
+      r3mi: "curious/point", vtgm: "neutral/point",
+      text: {
+        de: "„Prüfungsfrage. Ein Cache ist als D 1,5 / T 5 gelistet. Was heißt das?“",
+        en: "“Assessment question. A cache is listed as D 1.5 / T 5. What does that mean?”"
+      },
+      choices: [
+        { t: { de: "Leicht zu finden, aber das Gelände ist heftig.", en: "Easy to find, but the terrain is brutal." }, to: "na3a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "Schwer zu finden, aber bequem zu erreichen.", en: "Hard to find, but easy to get to." }, to: "na3b", aff: -1, log: -2 },
+        { t: { de: "Kleine Dose, langer Fußweg.", en: "Small container, long walk." }, to: "na3b", aff: 0, log: -1 },
+        { t: { de: "1,5 Kilometer, fünf Stationen.", en: "1.5 kilometres, five stages." }, to: "na3b", aff: 0, log: -1 }
+      ]
+    },
+    na3a: {
+      route: "nando", who: "r3mi", scene: "city", r3mi: "proud/hips", vtgm: "happy/idle",
+      emote: { who: "r3mi", kind: "sparkle" },
+      text: {
+        de: "„RICHTIG! D ist Difficulty — das Finden. T ist Terrain — der Weg dahin. Bei T 5 brauchst du Kletterzeug oder ein Boot. Bei D 1,5 liegt sie praktisch auf dem Präsentierteller.“",
+        en: "“CORRECT! D is Difficulty — the finding. T is Terrain — getting there. At T 5 you need climbing gear or a boat. At D 1.5 it is practically served on a platter.”"
+      },
+      next: "na4"
+    },
+    na3b: {
+      route: "nando", who: "vtgm", scene: "city", r3mi: "sad/slump", vtgm: "annoyed/crossed",
+      text: {
+        de: "Falsch herum. D ist das Finden, T ist der Weg. Ich erwähne das nur, weil dich sonst irgendwann ein Baum überrascht.",
+        en: "The wrong way round. D is the finding, T is the getting there. I mention it only because otherwise a tree will surprise you one day."
+      },
+      next: "na4"
+    },
+    na4: {
+      route: "nando", who: "units", scene: "city", r3mi: "suspicious/think", vtgm: "suspicious/idle",
       text: {
         de: "Eine Gruppe Muggel stellt sich direkt vor die Dose und diskutiert seit zwölf Minuten über einen Parkschein.",
         en: "A group of Muggles plants itself directly in front of the cache and has been discussing a parking ticket for twelve minutes."
       },
       choices: [
-        { t: { de: "Eine spontane Stadtführung improvisieren.", en: "Improvise a spontaneous walking tour." }, to: "na4a", aff: 2, log: 2 },
-        { t: { de: "Ehrlich einen DNF loggen und Eis essen gehen.", en: "Log an honest DNF and go get ice cream." }, to: "na4b", aff: 1, log: 2 },
-        { t: { de: "„SCHAUT MAL, EIN TRACKABLE!“ rufen und zugreifen.", en: "Shout “LOOK, A TRACKABLE!” and grab." }, to: "na4c", aff: 0, log: -1 }
+        { t: { de: "Eine spontane Stadtführung improvisieren.", en: "Improvise a spontaneous walking tour." }, to: "na5", aff: 2, log: 2 },
+        { t: { de: "Ehrlich einen DNF loggen und Eis essen gehen.", en: "Log an honest DNF and go get ice cream." }, to: "na5", aff: 1, log: 2 },
+        { t: { de: "„SCHAUT MAL, EIN TRACKABLE!“ rufen und zugreifen.", en: "Shout “LOOK, A TRACKABLE!” and grab." }, to: "na5", aff: -1, log: -1 }
       ]
     },
-    na4a: {
-      route: "nando", who: "bots", scene: "city",
-      text: {
-        de: "Du erfindest die Geschichte dieses Laternenmastes. Sie ist bewegend. Zwei Muggel machen Fotos. Einer fragt nach deinem Instagram. T4-TC: „ZEHN VON ZEHN!“",
-        en: "You invent the history of this lamppost. It is moving. Two Muggles take photos. One asks for your Instagram. T4-TC: “TEN OUT OF TEN!”"
-      },
-      next: "na5"
-    },
-    na4b: {
-      route: "nando", who: "nando", scene: "city",
-      text: {
-        de: "„Du hast einen DNF geloggt, obwohl ich neben dir stehe“, sagt Nando gerührt. „Das ist die ehrlichste Sache, die je jemand für mich getan hat.“ Das Eis ist auch gut.",
-        en: "“You logged a DNF while I was standing right next to you,” Nando says, moved. “That is the most honest thing anyone has done for me.” The ice cream is good too."
-      },
-      next: "na5"
-    },
-    na4c: {
-      route: "nando", who: "bots", scene: "city",
-      text: {
-        de: "Alle sieben Muggel drehen sich gleichzeitig um. Du hältst einen vier Zentimeter großen Mann in der Hand. Es folgt eine Stille, die niemand von euch je vergessen wird.",
-        en: "All seven Muggles turn round at once. You are holding a four-centimetre man. There follows a silence none of you will ever forget."
-      },
-      next: "na5"
-    },
     na5: {
-      route: "nando", who: "bots", scene: "city", fx: "shake",
+      route: "nando", who: "nando", scene: "city", fx: "shake", quiz: true,
+      r3mi: "panic/panic", vtgm: "panic/idle",
+      emote: { who: "nando", kind: "sweat" },
+      text: {
+        de: "Nando rutscht ab und fällt durch ein Gullygitter auf einen Absatz, dreißig Zentimeter tief. Erreichbar. Gerade so. Vier Möglichkeiten.",
+        en: "Nando slips and drops through a drain grate onto a ledge, thirty centimetres down. Reachable. Just about. Four options."
+      },
+      choices: [
+        { t: { de: "Spiegel rein, Teleskop-Magnet dran, rausheben.", en: "Mirror in, telescopic magnet on him, lift him out." }, to: "na5a", aff: 3, log: 2, right: true, fx: "sparks" },
+        { t: { de: "Mit zwei Fingern hinterhergreifen.", en: "Reach in after him with two fingers." }, to: "na5b", aff: -2, log: -1 },
+        { t: { de: "Das Gitter anheben. Das ist bestimmt erlaubt.", en: "Lift the grate. That's surely allowed." }, to: "na5b", aff: -1, log: -2 },
+        { t: { de: "Kräftig rütteln, bis er von selbst rausfällt.", en: "Shake it hard until he falls out by himself." }, to: "na5b", aff: -2, log: -1 }
+      ]
+    },
+    na5a: {
+      route: "nando", who: "nando", scene: "city", r3mi: "happy/cheer", vtgm: "happy/idle",
+      emote: { who: "nando", kind: "heart" },
+      text: {
+        de: "Er landet in deiner Handfläche, ohne dass ein einziger Finger ihn berührt hat. „Du hast es dir gemerkt“, sagt er. „Das mit dem Spiegel. Vier Zentimeter Mensch, und du hast es dir gemerkt.“",
+        en: "He lands in your palm without a single finger having touched him. “You remembered,” he says. “The mirror thing. Four centimetres of person, and you remembered.”"
+      },
+      next: "na6"
+    },
+    na5b: {
+      route: "nando", who: "vtgm", scene: "city", r3mi: "sad/slump", vtgm: "suspicious/crossed",
+      text: {
+        de: "Er hat dich als Allererstes darum gebeten. Es war seine einzige Bitte. Ich führe darüber Buch, das ist buchstäblich meine Aufgabe.",
+        en: "He asked you that before anything else. It was his one request. I keep records of this. That is literally my function."
+      },
+      next: "na6"
+    },
+    na6: {
+      route: "nando", who: "units", scene: "city", fx: "shake",
+      r3mi: "panic/panic", vtgm: "error404/idle",
       text: {
         de: "Ein Transporter parkt ein. Nando — magnetisch, klein, romantisch impulsiv — heftet sich an die Seitentür. Der Transporter fährt los.",
         en: "A van pulls in. Nando — magnetic, tiny, romantically impulsive — attaches himself to the side door. The van drives away."
       },
       choices: [
-        { t: { de: "Hinterherrennen. Es sind nur 400 Meter. Und eine Ampel.", en: "Run after it. It's only 400 metres. And one traffic light." }, to: "na6", aff: 2, log: 1, fx: "sparks" },
-        { t: { de: "Das Kennzeichen notieren und im Listing als Hinweis ergänzen.", en: "Note the plate and add it to the listing as a hint." }, to: "na6", aff: 1, log: 2 },
-        { t: { de: "Ein Foto machen und „Cache is missing?“ loggen.", en: "Take a photo and log “Cache is missing?”" }, to: "na6", aff: -1, log: -2 }
+        { t: { de: "Hinterherrennen. Es sind nur 400 Meter. Und eine Ampel.", en: "Run after it. It's only 400 metres. And one traffic light." }, to: "na7", aff: 2, log: 1, fx: "sparks" },
+        { t: { de: "Das Kennzeichen notieren und dem Owner schreiben.", en: "Note the plate and message the owner." }, to: "na7", aff: 1, log: 2 },
+        { t: { de: "Ein Foto machen und „Cache is missing?“ loggen.", en: "Take a photo and log “Cache is missing?”" }, to: "na7", aff: -2, log: -2 }
       ]
     },
-    na6: {
-      route: "nando", who: "nando", scene: "city",
-      end: "nando",
+    na7: {
+      route: "nando", who: "nando", scene: "city", end: "nando",
+      r3mi: "happy/idle", vtgm: "neutral/idle",
       text: {
         de: "Der Transporter hält an der Ampel. Nando fällt ab und landet in deiner Handfläche.",
         en: "The van stops at a red light. Nando drops off and lands in your palm."
       }
     },
 
-    /* ================= MYSTI — the ruin ================= */
+    /* ================= MYSTI — PRÜFKÖRPER 03 ================= */
     my1: {
       route: "mysti", who: "mysti", scene: "ruins",
+      r3mi: "curious/think", vtgm: "neutral/idle",
       text: {
-        de: "Mysti wartet an der Ruine mit 47 offenen Browser-Tabs und einem Blick, der sagt: Das hier wird keine schnelle Nummer. „Bevor wir essen gehen: eine Kleinigkeit.“",
-        en: "Mysti waits at the ruin with 47 browser tabs open and a look that says this will not be quick. “Before dinner: one small thing.”"
+        de: "Mysti wartet an der Ruine mit 47 offenen Tabs. „Bevor wir essen gehen: eine Kleinigkeit.“ Sie hält ein Schild hoch. Darauf steht: YBIR.",
+        en: "Mysti waits at the ruin with 47 tabs open. “Before dinner: one small thing.” She holds up a sign. It reads: YBIR."
+      },
+      choices: [
+        { t: { de: "„LOVE.“ ROT13. Es ist immer ROT13.", en: "“LOVE.” ROT13. It is always ROT13." }, to: "my1a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "„Ist das Walisisch?“", en: "“Is that Welsh?”" }, to: "my1b", aff: 0, log: 0 },
+        { t: { de: "„Ich gebe auf. Gib mir den Hint.“", en: "“I give up. Give me the hint.”" }, to: "my1c", aff: 1, log: 0 }
+      ],
+      quiz: true
+    },
+    my1a: {
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "proud/cheer", vtgm: "happy/idle",
+      emote: { who: "mysti", kind: "heart" },
+      text: {
+        de: "Mysti wird rot. Genau ein Pixel. „Das kriegt niemand beim ersten Mal.“ — „Ich hatte einen guten Lehrer.“ — „Wen?“ — „Deinen Cache. Das Blaue Wunder. Ich habe zweieinhalb Jahre gebraucht.“",
+        en: "Mysti blushes. Exactly one pixel. “Nobody gets that first try.” “I had a good teacher.” “Who?” “Your cache. Das Blaue Wunder. It took me two and a half years.”"
       },
       next: "my2"
     },
-    my2: {
-      route: "mysti", who: "mysti", scene: "ruins",
-      text: {
-        de: "Sie hält ein Schild hoch. Darauf steht: YBIR. „Mein Standard-Icebreaker. Fünf Leute haben ihn als Beleidigung aufgefasst.“",
-        en: "She holds up a sign. It reads: YBIR. “My standard icebreaker. Five people took it as an insult.”"
-      },
-      choices: [
-        { t: { de: "„LOVE.“ ROT13. Es ist immer ROT13.", en: "“LOVE.” ROT13. It is always ROT13." }, to: "my3a", aff: 3, log: 2, fx: "hearts" },
-        { t: { de: "„Ist das Walisisch?“", en: "“Is that Welsh?”" }, to: "my3b", aff: 0, log: 0 },
-        { t: { de: "„Ich gebe auf. Gib mir den Hint.“", en: "“I give up. Give me the hint.”" }, to: "my3c", aff: 1, log: 0 }
-      ]
-    },
-    my3a: {
-      route: "mysti", who: "mysti", scene: "ruins",
-      text: {
-        de: "Mysti wird rot. Genau ein Pixel. „Das kriegt niemand beim ersten Mal.“ — „Ich hatte einen guten Lehrer.“ — „Wen?“ — „Deinen letzten Cache. Zweieinhalb Jahre.“",
-        en: "Mysti blushes. Exactly one pixel. “Nobody gets that first try.” “I had a good teacher.” “Who?” “Your last cache. Two and a half years.”"
-      },
-      next: "my4"
-    },
-    my3b: {
-      route: "mysti", who: "mysti", scene: "ruins",
+    my1b: {
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "suspicious/idle", vtgm: "annoyed/idle",
       text: {
         de: "„Walisisch“, sagt Mysti langsam, „wäre ein interessanter Ansatz gewesen. Ich behalte das im Kopf. Für später. Für ein anderes Rätsel. Für dich nicht.“",
         en: "“Welsh,” Mysti says slowly, “would have been an interesting approach. I'll keep it in mind. For later. For another puzzle. Not for you.”"
       },
-      next: "my4"
+      next: "my2"
     },
-    my3c: {
-      route: "mysti", who: "mysti", scene: "ruins",
+    my1c: {
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "happy/idle", vtgm: "neutral/idle",
       text: {
         de: "Sie gibt dir den Hint. Der Hint ist ebenfalls ROT13. Der Hint lautet: EBG13.",
         en: "She gives you the hint. The hint is also ROT13. The hint reads: EBG13."
       },
+      next: "my2"
+    },
+    my2: {
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "neutral/idle", vtgm: "neutral/idle",
+      text: {
+        de: "„Mein eigener Cache ist übrigens Das Blaue Wunder“, sagt sie. „Zweieinhalb Jahre habe ich an meinem eigenen Rätsel gesessen, weil ich vergessen hatte, wie ich es verschlüsselt hatte. Ein Rätsel ohne Checksumme ist eine Grausamkeit.“",
+        en: "“My own cache is Das Blaue Wunder, by the way,” she says. “I sat on my own puzzle for two and a half years because I'd forgotten how I encrypted it. A puzzle without a checksum is an act of cruelty.”"
+      },
+      choices: [
+        { t: { de: "„Deshalb baust du immer eine Quersumme ein.“", en: "“Which is why you always build in a cross-sum.”" }, to: "my3", aff: 2, log: 2, fx: "hearts" },
+        { t: { de: "„Zweieinhalb Jahre sind auch eine Beziehung.“", en: "“Two and a half years is a relationship too.”" }, to: "my3", aff: 2, log: 0 },
+        { t: { de: "„Klingt nach einem Designfehler.“", en: "“Sounds like a design flaw.”" }, to: "my3", aff: -1, log: 0 }
+      ]
+    },
+    my3: {
+      route: "mysti", who: "mysti", scene: "ruins", quiz: true,
+      r3mi: "curious/point", vtgm: "neutral/point",
+      text: {
+        de: "„Prüfungsfrage. Du löst ein Mystery. Das Final liegt 3,5 Kilometer von den Listing-Koordinaten entfernt. Was machst du?“",
+        en: "“Assessment question. You solve a mystery cache. The final is 3.5 kilometres from the posted coordinates. What do you do?”"
+      },
+      choices: [
+        { t: { de: "Owner anschreiben — das ist außerhalb der Zwei-Meilen-Richtlinie.", en: "Message the owner — that's outside the two-mile guideline." }, to: "my3a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "Nachrechnen. 3,5 km sind doch erlaubt.", en: "Do the maths again. 3.5 km is allowed, surely." }, to: "my3b", aff: 0, log: -1 },
+        { t: { de: "Hingehen, loggen, nichts sagen.", en: "Go there, log it, say nothing." }, to: "my3b", aff: 0, log: -1 },
+        { t: { de: "Sofort ein „Needs Archived“ setzen.", en: "File a “Needs Archived” immediately." }, to: "my3b", aff: -2, log: -2 }
+      ]
+    },
+    my3a: {
+      route: "mysti", who: "r3mi", scene: "ruins", r3mi: "proud/hips", vtgm: "happy/idle",
+      emote: { who: "r3mi", kind: "sparkle" },
+      text: {
+        de: "„RICHTIG! Zwei Meilen sind ungefähr 3,2 Kilometer. 3,5 sind zu weit — also hast du dich entweder verrechnet oder das Listing hat ein Problem. Beides klärt man freundlich, nicht mit einem NA.“",
+        en: "“CORRECT! Two miles is about 3.2 kilometres. 3.5 is too far — so either you miscalculated or the listing has a problem. Both get sorted out politely, not with an NA.”"
+      },
+      next: "my4"
+    },
+    my3b: {
+      route: "mysti", who: "vtgm", scene: "ruins", r3mi: "sad/slump", vtgm: "annoyed/crossed",
+      text: {
+        de: "Zwei Meilen sind 3,2 Kilometer. Deine Lösung liegt außerhalb. Das ist fast immer ein Rechenfehler, und fast nie die Schuld des Owners.",
+        en: "Two miles is 3.2 kilometres. Your solution falls outside it. That is nearly always an arithmetic error, and nearly never the owner's fault."
+      },
       next: "my4"
     },
     my4: {
-      route: "mysti", who: "mysti", scene: "ruins",
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "neutral/idle", vtgm: "neutral/idle",
       text: {
-        de: "„Die Final-Koordinaten haben eine Quersumme“, sagt Mysti. „Wenn deine nicht stimmt, hast du dich verrechnet, und wir reden nie wieder darüber.“ Es ist die romantischste Drohung deines Lebens.",
-        en: "“The final coordinates have a cross-sum,” Mysti says. “If yours doesn't match, you miscalculated, and we never speak of it again.” It is the most romantic threat of your life."
+        de: "„Gut“, sagt Mysti. „Dann rechnen wir jetzt gemeinsam. Ich habe hier vierzehn Zahlen, einen Mondkalender und ein sehr schlechtes Gefühl.“",
+        en: "“Good,” Mysti says. “Then we do the arithmetic together. I have fourteen numbers here, a lunar calendar and a very bad feeling.”"
       },
       choices: [
         { t: { de: "Ein Spreadsheet öffnen. Das ist meine Liebessprache.", en: "Open a spreadsheet. That is my love language." }, to: "my5", aff: 2, log: 2, fx: "sparks" },
         { t: { de: "In jedes Feld „42“ schreiben und hoffen.", en: "Put “42” in every field and hope." }, to: "my5", aff: 1, log: 0 },
-        { t: { de: "Im Listing nach einem versehentlichen Spoiler suchen.", en: "Scan the listing for an accidental spoiler." }, to: "my5", aff: 0, log: 1 }
+        { t: { de: "Im Listing nach einem versehentlichen Spoiler suchen.", en: "Scan the listing for an accidental spoiler." }, to: "my5", aff: -1, log: 1 }
       ]
     },
     my5: {
-      route: "mysti", who: "bots", scene: "ruins", fx: "thorns",
+      route: "mysti", who: "mysti", scene: "ruins", quiz: true,
+      r3mi: "curious/think", vtgm: "suspicious/idle",
+      text: {
+        de: "Sie legt den Stift hin. „Letzte Frage, und die ist persönlich. Wie lange habe ich an meinem eigenen Rätsel gesessen?“",
+        en: "She puts the pen down. “Last question, and this one's personal. How long did I sit on my own puzzle?”"
+      },
+      choices: [
+        { t: { de: "„Zweieinhalb Jahre.“", en: "“Two and a half years.”" }, to: "my5a", aff: 3, log: 2, right: true, fx: "hearts" },
+        { t: { de: "„Ein halbes Jahr.“", en: "“Six months.”" }, to: "my5b", aff: -1, log: 0 },
+        { t: { de: "„Einen Abend.“", en: "“One evening.”" }, to: "my5b", aff: -1, log: 0 },
+        { t: { de: "„Du hast es nie gelöst.“", en: "“You never solved it.”" }, to: "my5b", aff: -2, log: 0 }
+      ]
+    },
+    my5a: {
+      route: "mysti", who: "mysti", scene: "ruins", r3mi: "happy/cheer", vtgm: "happy/idle",
+      emote: { who: "mysti", kind: "sparkle" },
+      text: {
+        de: "„Zweieinhalb Jahre“, wiederholt sie. „Ich sage das jedem. Niemand merkt es sich. Es ist mein Test, und du bist der erste Mensch, der ihn bestanden hat, ohne zu wissen, dass er einer war.“",
+        en: "“Two and a half years,” she repeats. “I tell everyone. Nobody remembers. It is my test, and you are the first person to pass it without knowing it was one.”"
+      },
+      next: "my6"
+    },
+    my5b: {
+      route: "mysti", who: "vtgm", scene: "ruins", r3mi: "sad/slump", vtgm: "suspicious/crossed",
+      text: {
+        de: "Sie hat es zweimal gesagt. Einmal beiläufig, einmal deutlich. Das war der Test. Sie stellt ihn immer, und fast niemand merkt, dass er läuft.",
+        en: "She said it twice. Once in passing, once plainly. That was the test. She always runs it, and almost nobody notices it is running."
+      },
+      next: "my6"
+    },
+    my6: {
+      route: "mysti", who: "units", scene: "ruins", fx: "thorns",
+      r3mi: "panic/panic", vtgm: "annoyed/idle",
       text: {
         de: "73 Rechenschritte später zeigt das Final mitten in einen Brombeerbusch. Es zeigt IMMER in einen Brombeerbusch.",
         en: "Seventy-three calculations later, the final points into the middle of a blackberry bush. It ALWAYS points into a blackberry bush."
       },
       choices: [
-        { t: { de: "Gemeinsam rein. Liebe ist temporär, Dornen sind für immer.", en: "In together. Love is temporary, thorns are forever." }, to: "my6", aff: 2, log: 1, fx: "thorns" },
-        { t: { de: "Erst ein Plausibilitäts-Check. Dann rein.", en: "Sanity-check the numbers first. Then in." }, to: "my6", aff: 1, log: 2 },
-        { t: { de: "Dem Owner schreiben: „Brauche Hint. Und Pflaster.“", en: "Message the owner: “Need a hint. And a plaster.”" }, to: "my6", aff: 1, log: 1 }
+        { t: { de: "Gemeinsam rein. Liebe ist temporär, Dornen sind für immer.", en: "In together. Love is temporary, thorns are forever." }, to: "my7", aff: 2, log: 1, fx: "thorns" },
+        { t: { de: "Erst ein Plausibilitäts-Check. Dann rein.", en: "Sanity-check the numbers first. Then in." }, to: "my7", aff: 2, log: 2 },
+        { t: { de: "Dem Owner schreiben: „Brauche Hint. Und Pflaster.“", en: "Message the owner: “Need a hint. And a plaster.”" }, to: "my7", aff: 1, log: 1 }
       ]
     },
-    my6: {
-      route: "mysti", who: "mysti", scene: "ruins",
-      end: "mysti",
+    my7: {
+      route: "mysti", who: "mysti", scene: "ruins", end: "mysti",
+      r3mi: "happy/idle", vtgm: "neutral/idle",
       text: {
         de: "Ihr sitzt zerkratzt auf einem Mauerrest und seid sehr zufrieden mit euch.",
         en: "You sit on a piece of ruined wall, thoroughly scratched, and very pleased with yourselves."
@@ -487,45 +742,63 @@ window.STORY = (function () {
 
     /* ================= FINALE ================= */
     fin1: {
-      who: "bots", scene: "finale", fx: "hearts",
+      who: "system", scene: "finale", fx: "glitch",
+      r3mi: "happy/present", vtgm: "neutral/idle",
       text: {
-        de: "Dein GPS piept. Dann piept es anders. Dann rastet es ein.",
-        en: "Your GPSr beeps. Then it beeps differently. Then it locks on."
+        de: "SEKTOR 12 — ALLE DREI PRÜFUNGEN BESTANDEN. EMOTIONALE VERTRÄGLICHKEIT: NACHGEWIESEN. ZERTIFIZIERUNG 7C ERTEILT.",
+        en: "SECTOR 12 — ALL THREE ASSESSMENTS PASSED. EMOTIONAL COMPATIBILITY: DEMONSTRATED. CERTIFICATION 7C GRANTED."
       },
       next: "fin2"
     },
     fin2: {
-      who: "t4tc", scene: "finale",
+      who: "r3mi", scene: "finale", fx: "hearts", r3mi: "proud/cheer", vtgm: "happy/idle",
+      emote: { who: "r3mi", kind: "heart" },
       text: {
-        de: "Du hast alle drei gedatet, und alle drei mögen dich immer noch. Das ist statistisch bemerkenswert und emotional kompliziert!",
-        en: "You dated all three, and all three still like you. That is statistically remarkable and emotionally complicated!"
+        de: "„Du hast alle drei gedatet, und alle drei mögen dich immer noch. Das ist statistisch bemerkenswert und emotional außerordentlich kompliziert!“",
+        en: "“You dated all three, and all three still like you. That is statistically remarkable and emotionally extremely complicated!”"
       },
       next: "fin3"
     },
     fin3: {
-      who: "dnf", scene: "finale", fx: "sparks",
+      who: "vtgm", scene: "finale", fx: "sparks", r3mi: "happy/idle", vtgm: "happy/highfive",
+      emote: { who: "vtgm", kind: "sparkle" },
       text: {
-        de: "Ich habe es geloggt. Als „Found it“. Zum ersten Mal seit 4.112 Versuchen.",
-        en: "I have logged it. As “Found it”. For the first time in 4,112 attempts."
+        de: "Ich habe es geloggt. Als „Found it“. Zum ersten Mal, seit die Anlage ausgegangen ist.",
+        en: "I have logged it. As a Found it. For the first time since the facility went dark."
       },
       next: "fin4"
     },
     fin4: {
-      who: "petra", scene: "finale",
+      who: "r3mi", scene: "finale", r3mi: "curious/point", vtgm: "annoyed/crossed",
       text: {
-        de: "„Da draußen liegt eine echte Dose“, sagt Petra. „Nimm einen Stift mit. Der Stift ist immer das Problem.“",
-        en: "“There is a real container out there,” Petra says. “Bring a pen. The pen is always the problem.”"
+        de: "„Sie hat zwei Minuten gebraucht, um das zu formulieren. Ich habe mitgezählt. Das war rührend.“",
+        en: "“It took her two minutes to phrase that. I counted. It was moving.”"
+      },
+      next: "fin5"
+    },
+    fin5: {
+      who: "petra", scene: "finale", r3mi: "happy/idle", vtgm: "neutral/idle",
+      text: {
+        de: "„Da draußen liegt eine echte Dose“, sagt Petra. „Nimm einen Stift mit.“ — „Bleistift“, sagen alle drei gleichzeitig.",
+        en: "“There's a real container out there,” Petra says. “Bring a pen.” “Pencil,” all three say at once."
       },
       next: "reveal"
     },
-    reveal: { reveal: true, scene: "finale", who: "bots" }
+    reveal: { reveal: true, scene: "finale", who: "units" }
   };
 
   /* ------------------------------------------------------------------
-   * Route scoring. GOLD is the only rank that releases digits.
+   * Scoring.
+   *
+   * Six scored beats per assessment. Two of them have exactly one
+   * correct answer: a geocaching-knowledge check, and a memory check on
+   * something the subject said several beats earlier. A perfect run
+   * scores 14 affection and 12 log quality, so the thresholds below
+   * forgive roughly one bad answer and nothing more.
    * ------------------------------------------------------------------ */
-  const GOLD = { aff: 5, log: 4 };
-  const SILVER = { aff: 3, log: 0 };
+  const GOLD = { aff: 11, log: 9 };
+  const SILVER = { aff: 6, log: 0 };
+  const ROUTE_MAX = { aff: 15, log: 12 };
 
   const rankTexts = {
     petra: {
@@ -534,7 +807,7 @@ window.STORY = (function () {
         en: "Petra tears the last page from her very first logbook — the 2007 one, the one with the water damage — and presses it into your hand. Four digits. “Don't lose it. I don't have a backup, I have a logbook.”"
       },
       silver: {
-        de: "Petra lächelt freundlich und wasserdicht. „Netter Nachmittag.“ Sie behält die Seite. Du kennst diesen Tonfall: Das war ein „Write note“, kein „Found it“.",
+        de: "Petra lächelt freundlich und wasserdicht. „Netter Nachmittag.“ Sie behält die Seite. Du kennst diesen Tonfall: Das war ein Write Note, kein Found it.",
         en: "Petra smiles, warmly and waterproofly. “Nice afternoon.” She keeps the page. You know that tone: that was a Write Note, not a Found It."
       },
       bronze: {
@@ -544,7 +817,7 @@ window.STORY = (function () {
     },
     nando: {
       gold: {
-        de: "„Das war meine erste Reise als Trackable“, sagt Nando und rollt sich auf. Innen, in winziger Schrift, stehen drei Ziffern. „Steht seit 2011 drin. Du bist der Erste, der weit genug gelesen hat.“",
+        de: "„Das war meine erste Reise als Trackable“, sagt Nando und rollt sich auf. Innen, in winziger Schrift, stehen drei Ziffern. „Stehen da seit 2011. Du bist der Erste, der weit genug gelesen hat.“",
         en: "“That was my first trip as a trackable,” Nando says, and unrolls. Inside, in tiny writing, are three digits. “They've been in there since 2011. You're the first person who read that far.”"
       },
       silver: {
@@ -572,19 +845,39 @@ window.STORY = (function () {
     }
   };
 
-  /* Player-facing log entry, assembled at the end. */
+  /* What the units say over the assessment record. */
+  const rankComment = {
+    gold: {
+      r3mi: { de: "„Bestanden! Ich habe es rot unterstrichen. Also grün. Ich habe es grün unterstrichen.“",
+              en: "“Passed! I underlined it in red. I mean green. I underlined it in green.”" },
+      expr: "proud/cheer", vexpr: "happy/idle"
+    },
+    silver: {
+      r3mi: { de: "„So knapp! So, so knapp. Du darfst nochmal. Ich habe die Prüfung schon zurückgesetzt.“",
+              en: "“So close! So, so close. You may go again. I have already reset the assessment.”" },
+      expr: "sad/slump", vexpr: "neutral/idle"
+    },
+    bronze: {
+      r3mi: { de: "„Das … war eine Messung. Jede Messung ist wertvoll. Manche sind wertvoller.“",
+              en: "“That … was a measurement. Every measurement is valuable. Some are more valuable.”" },
+      expr: "sad/slump", vexpr: "annoyed/crossed"
+    }
+  };
+
   const logTemplate = {
     de: [
-      "Found it! Nach {dates} Dates, einem Muggel mit Hund, einem Transporter und",
-      "einem Brombeerbusch: eingeloggt. Zuneigung {aff}, Log-Qualität {log}.",
-      "Danke an Petra für den O-Ring, an Nando fürs Kleinsein und an Mysti dafür,",
-      "dass sie mir den Hint in ROT13 gegeben hat. TFTC!"
+      "Found it! Nach {dates} Prüfungen in Sektor 12, einem Muggel mit Hund,",
+      "einem Gullygitter und einem Brombeerbusch: eingeloggt.",
+      "Zuneigung {aff}, Log-Qualität {log}. Danke an Petra für den O-Ring,",
+      "an Nando fürs Kleinsein und an Mysti dafür, dass sie mir den Hint",
+      "in ROT13 gegeben hat. R-3MI und V-TGM: ihr seid die Anlage. TFTC!"
     ],
     en: [
-      "Found it! After {dates} dates, one Muggle with a dog, one van and one",
-      "blackberry bush: signed. Affection {aff}, log quality {log}.",
-      "Thanks to Petra for the O-ring, to Nando for being small, and to Mysti for",
-      "giving me the hint in ROT13. TFTC!"
+      "Found it! After {dates} assessments in Sector 12, one Muggle with a dog,",
+      "one drain grate and one blackberry bush: signed.",
+      "Affection {aff}, log quality {log}. Thanks to Petra for the O-ring,",
+      "to Nando for being small, and to Mysti for giving me the hint in",
+      "ROT13. R-3MI and V-TGM: you are the facility. TFTC!"
     ]
   };
 
@@ -595,9 +888,11 @@ window.STORY = (function () {
     ui: ui,
     nodes: nodes,
     rankTexts: rankTexts,
+    rankComment: rankComment,
     logTemplate: logTemplate,
     GOLD: GOLD,
     SILVER: SILVER,
+    ROUTE_MAX: ROUTE_MAX,
     entry: { petra: "pe1", nando: "na1", mysti: "my1" }
   };
 })();

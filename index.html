@@ -18,9 +18,10 @@
   <div class="title-card">
     <canvas id="titleCanvas" width="320" height="180" aria-hidden="true"></canvas>
     <div class="title-text">
-      <p class="kicker" id="titleKicker">GC-PUZZLE · DE / EN</p>
+      <p class="kicker" id="titleKicker"></p>
       <h1>Liebe auf<br>den ersten Log</h1>
       <p id="titleSub" class="title-sub"></p>
+      <p id="titleNeed" class="title-need"></p>
       <div class="title-actions">
         <button id="btnContinue" class="btn primary" type="button" hidden></button>
         <button id="btnStart" class="btn primary" type="button"></button>
@@ -79,6 +80,7 @@
           <h2 id="speaker"></h2>
         </div>
         <p id="dialogueText"></p>
+        <p id="dialogueSub" class="dialogue-sub" hidden></p>
         <p id="srLive" class="sr-only" aria-live="polite"></p>
         <div id="choices" class="choices"></div>
         <p id="hint" class="hint"></p>
@@ -134,7 +136,10 @@
 </noscript>
 
 <script src="js/coords.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/art.js"></script>
+<script src="js/hosts.js"></script>
+<script src="js/logo.js"></script>
 <script src="js/scenes.js"></script>
 <script src="js/story.js"></script>
 <script src="js/game.js"></script>
