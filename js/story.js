@@ -76,6 +76,10 @@ window.STORY = (function () {
    * ------------------------------------------------------------------ */
   const ui = {
     de: {
+      /* The cache's own name. `cacheNameLines` is the same name split
+       * where the title-screen heading should wrap. */
+      cacheName: "Liebe auf den ersten Log",
+      cacheNameLines: ["Liebe auf", "den ersten Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
       sector: "SEKTOR 12 - EMOTIONALE VERTRAEGLICHKEIT",
       motto: "TESTEN. MESSEN. VERLIEBEN.",
@@ -132,6 +136,8 @@ window.STORY = (function () {
       needAll: "Alle drei Prüfungen bestehen, dann rastet das GPS ein."
     },
     en: {
+      cacheName: "Love On The First Log",
+      cacheNameLines: ["Love On", "The First Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
       sector: "SECTOR 12 - EMOTIONAL COMPATIBILITY",
       motto: "TESTEN. MESSEN. VERLIEBEN.",

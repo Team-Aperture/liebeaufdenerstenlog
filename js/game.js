@@ -894,6 +894,18 @@
     $("btnChecker").textContent = s.checker;
     $("hintLabel").textContent = s.hintLabel;
 
+    /* The cache name appears in four places; all of them follow the
+     * interface language. The heading wraps at an authored break rather
+     * than wherever the column happens to run out. */
+    document.title = s.cacheName;
+    $("brandTitle").textContent = s.cacheName;
+    const heading = $("titleHeading");
+    heading.replaceChildren(
+      document.createTextNode(s.cacheNameLines[0]),
+      document.createElement("br"),
+      document.createTextNode(s.cacheNameLines[1])
+    );
+
     $("titleKicker").textContent = s.motto;
     $("titleSub").textContent = s.subtitle;
     $("titleNote").textContent = s.disclaimer;
