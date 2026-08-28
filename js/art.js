@@ -638,6 +638,30 @@ window.ART = (function () {
     return String(str).length * 4 * s - s;
   }
 
+  /**
+   * The same font with independent horizontal and vertical scale and a
+   * custom advance, which is what turns the 3x5 face into the tall
+   * condensed display lettering the Kalibrierungsanlage badge is set in.
+   * `adv` is the per-character step; make it smaller than 3*sx+sx to
+   * tighten the tracking.
+   */
+  function stamp(ctx, str, x, y, sx, sy, adv, color) {
+    const up = String(str).toUpperCase();
+    for (let i = 0; i < up.length; i++) {
+      const g = GLYPHS[up[i]] || GLYPHS["?"];
+      const gx = x + i * adv;
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 3; c++) {
+          if (g[r][c] === "o") rect(ctx, gx + c * sx, y + r * sy, sx, sy, color);
+        }
+      }
+    }
+  }
+
+  function stampWidth(str, sx, adv) {
+    return Math.max(0, String(str).length * adv - (adv - 3 * sx));
+  }
+
   return {
     VIEW_W: VIEW_W,
     VIEW_H: VIEW_H,
@@ -647,6 +671,8 @@ window.ART = (function () {
     sprite: sprite,
     heart: heart,
     text: text,
-    textWidth: textWidth
+    textWidth: textWidth,
+    stamp: stamp,
+    stampWidth: stampWidth
   };
 })();

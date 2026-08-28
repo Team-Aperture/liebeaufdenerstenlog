@@ -66,8 +66,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v6"` to `-v7`,
-`-v8`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v7"` to `-v8`,
+`-v9`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
@@ -172,10 +172,12 @@ Difficulty lives in `STORY.GOLD` and `STORY.SILVER` near the bottom of
 `js/story.js`. Raising `GOLD` makes the digits harder to earn.
 
 **The cache's own name is translated too.** `cacheName` and
-`cacheNameLines` in `js/story.js` feed the badge's lower strip, the
-title-screen heading, the in-game top bar and the browser tab. The
-badge is drawn in the 3×5 bitmap font, which has no umlauts — keep a
-replacement name to plain A–Z, digits and basic punctuation.
+`cacheNameLines` in `js/story.js` feed the badge's neon banner, the
+title-screen heading, the in-game top bar and the browser tab. The rest
+of the badge comes from `facility`, `motto`, `facilityTag` and
+`sectorTab` in the same block. All of it is drawn in the 3×5 bitmap
+font, which has no umlauts — keep replacement strings to plain A–Z,
+digits and basic punctuation.
 
 **The two units follow Kalibrierungsanlage canon:** R-3MI always speaks German
 and V-TGM always speaks English, whichever language the interface is set to.
@@ -192,8 +194,10 @@ cast entry, so a new character speaking a fixed language needs one field.
 - **R-3MI and V-TGM** drawn procedurally, with nine expressions and eleven arm
   poses that blend rather than snap, floating emotes from their expression
   sheets, bubbling coolant tanks and coiled feed lines
-- **The Kalibrierungsanlage badge** built in pixels — gauge, bevelled chrome
-  plate, motto strip, certification tab — assembling after a cold-start log
+- **The Kalibrierungsanlage badge** rebuilt in pixels from the facility's own
+  artwork — the chrome medallion with its faceted crystal heart, neon rings and
+  running heartbeat trace, the bevelled plate, the motto strip, the cache's name
+  on a neon banner and the sector tab — assembling after a cold-start log
 - **Hand-authored pixel art** on a 320×180 backbuffer: animated backdrops,
   drifting clouds, rain with splashes, fireflies, bats, dust motes, a wandering
   Muggle with a dog, block-dissolve scene transitions, confetti, idle bob,

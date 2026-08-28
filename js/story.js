@@ -82,6 +82,10 @@ window.STORY = (function () {
       cacheNameLines: ["Liebe auf", "den ersten Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
       sector: "SEKTOR 12 - EMOTIONALE VERTRAEGLICHKEIT",
+      /* The two lines along the bottom of the badge. `sectorTab` is the
+       * code in the little certification tab in the corner. */
+      facilityTag: "EINRICHTUNG ZUR PRAEZISIONSKALIBRIERUNG",
+      sectorTab: "12",
       motto: "TESTEN. MESSEN. VERLIEBEN.",
       subtitle: "Sektor 12 der Kalibrierungsanlage — mit Final-Koordinaten",
       start: "▶ Prüfung beginnen",
@@ -140,6 +144,8 @@ window.STORY = (function () {
       cacheNameLines: ["Love On", "The First Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
       sector: "SECTOR 12 - EMOTIONAL COMPATIBILITY",
+      facilityTag: "PRECISION CALIBRATION FACILITY",
+      sectorTab: "12",
       motto: "TESTEN. MESSEN. VERLIEBEN.",
       subtitle: "Sector 12 of the Calibration Facility — with final coordinates",
       start: "▶ Begin assessment",
