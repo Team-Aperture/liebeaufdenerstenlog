@@ -1,6 +1,6 @@
 # Liebe auf den ersten Log 💗🧭
 
-### DIE KALIBRIERUNGSANLAGE — Sektor 12: Emotionale Verträglichkeit
+### DIE KALIBRIERUNGSANLAGE — Sektor 7C: Abteilung Emotionale Verträglichkeit
 *TESTEN. MESSEN. VERLIEBEN.*
 
 **Ein zweisprachiges Geocaching-Datingspiel, das die Final-Koordinaten verrät.**
@@ -8,7 +8,8 @@
 
 Three assessments. Ten digits. One container.
 
-Sector 12 of the facility has come back online, and it would like to measure
+In Sector 7C — where everything in the facility happens — a department that
+was meant to stay dark has come back online, and it would like to measure
 your emotional compatibility. Running the tests are the two mobile units:
 **R-3MI**, who is delighted about everything and speaks German, and **V-TGM**,
 who has opinions and speaks English. Three test subjects — three caches — are
@@ -66,8 +67,8 @@ It runs entirely in your browser; nothing is uploaded anywhere.
 
 ### 2. Bump the cache version
 
-In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v6"` to `-v7`,
-`-v8`, and so on. The service worker serves the game offline, which means a
+In **`sw.js`**, bump `const CACHE = "liebe-auf-den-ersten-log-v8"` to `-v9`,
+`-v10`, and so on. The service worker serves the game offline, which means a
 returning player would otherwise keep the old coordinates forever.
 
 ### 3. Publish
@@ -172,10 +173,31 @@ Difficulty lives in `STORY.GOLD` and `STORY.SILVER` near the bottom of
 `js/story.js`. Raising `GOLD` makes the digits harder to earn.
 
 **The cache's own name is translated too.** `cacheName` and
-`cacheNameLines` in `js/story.js` feed the badge's lower strip, the
-title-screen heading, the in-game top bar and the browser tab. The
-badge is drawn in the 3×5 bitmap font, which has no umlauts — keep a
-replacement name to plain A–Z, digits and basic punctuation.
+`cacheNameLines` in `js/story.js` feed the badge's neon banner, the
+title-screen heading, the in-game top bar and the browser tab. The rest
+of the badge comes from `facility`, `motto`, `facilityTag` and
+`sectorTab` in the same block. All of it is drawn in the 3×5 bitmap
+font, which has no umlauts — keep replacement strings to plain A–Z,
+digits and basic punctuation.
+
+**Replay content lives in `js/story.js` too.** `banter` holds what the
+units say each time you come back to the hub, in pools picked by what just
+happened: a pass, a fail, two passes, all three, or a lot of attempts. No
+line repeats until its pool has run out. `retakes` holds the line each
+subject opens with when you retake their assessment, including one for
+coming back after you have already passed. A wrong-answer beat can carry
+an `again` text that V-TGM uses from the second time on.
+
+**Findings** are twenty collectibles in V-TGM's file on the player, listed in
+`findings`. Some come from choices (`ach: "id"` on the choice), others from
+the engine: a first pass, a failed record, a perfect score, five wrong
+quiz answers, a third attempt, retaking a passed assessment, switching
+language mid-assessment, copying the final log. Locked ones show a hint
+instead of their title. They are stored under their own `localStorage` key,
+so "start over" keeps them. That is on purpose: they are a reason to come
+back and pick the answers you skipped. The "perfect" finding is checked
+against the best score the script allows, worked out at load time, so
+changing a beat's points cannot make it impossible to get.
 
 **The two units follow Kalibrierungsanlage canon:** R-3MI always speaks German
 and V-TGM always speaks English, whichever language the interface is set to.
@@ -189,11 +211,17 @@ cast entry, so a new character speaking a fixed language needs one field.
 
 - **Three assessments** with branching reactions, per-route ranks, a knowledge
   check and a memory check each, and a real ROT13 puzzle on Mysti's route
+- **Built to be replayed:** hub banter that changes with every visit and
+  reacts to how you did, subjects who notice when you come back, V-TGM
+  losing patience with repeat wrong answers, and twenty **findings** to
+  collect, most of them for the answers nobody picks the first time
 - **R-3MI and V-TGM** drawn procedurally, with nine expressions and eleven arm
   poses that blend rather than snap, floating emotes from their expression
   sheets, bubbling coolant tanks and coiled feed lines
-- **The Kalibrierungsanlage badge** built in pixels — gauge, bevelled chrome
-  plate, motto strip, certification tab — assembling after a cold-start log
+- **The Kalibrierungsanlage badge** rebuilt in pixels from the facility's own
+  artwork — the chrome medallion with its faceted crystal heart, neon rings and
+  running heartbeat trace, the bevelled plate, the motto strip, the cache's name
+  on a neon banner and the sector tab — assembling after a cold-start log
 - **Hand-authored pixel art** on a 320×180 backbuffer: animated backdrops,
   drifting clouds, rain with splashes, fireflies, bats, dust motes, a wandering
   Muggle with a dog, block-dissolve scene transitions, confetti, idle bob,

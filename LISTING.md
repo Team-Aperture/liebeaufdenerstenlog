@@ -9,10 +9,10 @@ conservative subset of HTML, and this stays inside it.
 
 ## Kurzbeschreibung / Short description
 
-**DE**  Die Koordinaten oben sind nicht die Dose. Sektor 12 der
+**DE**  Die Koordinaten oben sind nicht die Dose. Sektor 7C der
 Kalibrierungsanlage: drei Prüfungen bestehen, zehn Ziffern bekommen.
 
-**EN**  The posted coordinates are not the cache. Sector 12 of the Calibration
+**EN**  The posted coordinates are not the cache. Sector 7C of the Calibration
 Facility: pass three assessments, get ten digits.
 
 ---
@@ -22,8 +22,9 @@ Facility: pass three assessments, get ten digits.
 > **Die Listing-Koordinaten sind nicht die Dose.** Sie sind eine Wiese. Eine
 > schöne Wiese, aber eine Wiese.
 >
-> Sektor 12 der Kalibrierungsanlage ist wieder online und möchte deine
-> emotionale Verträglichkeit messen. Durch die Prüfung führen dich zwei mobile
+> In Sektor 7C der Kalibrierungsanlage ist eine Abteilung wieder online, die
+> eigentlich ausbleiben sollte, und sie möchte deine emotionale
+> Verträglichkeit messen. Durch die Prüfung führen dich zwei mobile
 > Einheiten: **R-3MI**, die alles großartig findet und Deutsch spricht, und
 > **V-TGM**, die Meinungen hat und Englisch spricht.
 >
@@ -60,8 +61,9 @@ Facility: pass three assessments, get ten digits.
 > **The posted coordinates are not the cache.** They are a field. A nice field,
 > but a field.
 >
-> Sector 12 of the Calibration Facility is back online and would like to
-> measure your emotional compatibility. Running the tests are two mobile units:
+> In Sector 7C of the Calibration Facility, a department that was meant to
+> stay dark is back online, and it would like to measure your emotional
+> compatibility. Running the tests are two mobile units:
 > **R-3MI**, who is delighted about everything and speaks German, and
 > **V-TGM**, who has opinions and speaks English.
 >
@@ -99,8 +101,9 @@ Facility: pass three assessments, get ten digits.
 <p><strong>Die Listing-Koordinaten sind nicht die Dose.</strong> Sie sind eine
 Wiese. Eine schöne Wiese, aber eine Wiese.</p>
 
-<p>Sektor 12 der Kalibrierungsanlage ist wieder online und m&ouml;chte deine
-emotionale Vertr&auml;glichkeit messen. Durch die Pr&uuml;fung f&uuml;hren dich
+<p>In Sektor 7C der Kalibrierungsanlage ist eine Abteilung wieder online, die
+eigentlich ausbleiben sollte, und sie m&ouml;chte deine emotionale
+Vertr&auml;glichkeit messen. Durch die Pr&uuml;fung f&uuml;hren dich
 zwei mobile Einheiten: <strong>R-3MI</strong>, die alles gro&szlig;artig findet
 und Deutsch spricht, und <strong>V-TGM</strong>, die Meinungen hat und Englisch
 spricht.</p>

@@ -81,9 +81,13 @@ window.STORY = (function () {
       cacheName: "Liebe auf den ersten Log",
       cacheNameLines: ["Liebe auf", "den ersten Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
-      sector: "SEKTOR 12 - EMOTIONALE VERTRAEGLICHKEIT",
+      sector: "SEKTOR 7C - ABT. EMOTIONALE VERTRAEGLICHKEIT",
+      /* The two lines along the bottom of the badge. `sectorTab` is the
+       * code in the little certification tab in the corner. */
+      facilityTag: "EINRICHTUNG ZUR PRAEZISIONSKALIBRIERUNG",
+      sectorTab: "7C",
       motto: "TESTEN. MESSEN. VERLIEBEN.",
-      subtitle: "Sektor 12 der Kalibrierungsanlage — mit Final-Koordinaten",
+      subtitle: "Sektor 7C der Kalibrierungsanlage — mit Final-Koordinaten",
       start: "▶ Prüfung beginnen",
       resume: "▶ Weiterspielen",
       newGame: "Neu anfangen",
@@ -127,21 +131,29 @@ window.STORY = (function () {
       music: "Musik",
       bootLines: [
         "KALIBRIERUNGSANLAGE - KALTSTART",
-        "SEKTOR 12 ... EMOTIONALE VERTRAEGLICHKEIT",
+        "SEKTOR 7C ... ONLINE. WIE IMMER.",
+        "ABT. EMOTIONALE VERTRAEGLICHKEIT ... ENTSTAUBT",
         "PRUEFKOERPER 01 / 02 / 03 ... ONLINE",
         "MOBILE EINHEITEN ... R-3MI, V-TGM",
-        "ZERTIFIZIERUNG 7C ... GUELTIG",
-        "SEKTOR 12 ENTSPERRT."
+        "ABTEILUNG ENTSPERRT. LEIDER."
       ],
-      needAll: "Alle drei Prüfungen bestehen, dann rastet das GPS ein."
+      needAll: "Alle drei Prüfungen bestehen, dann rastet das GPS ein.",
+      findings: "Befunde",
+      findingsSub: "V-TGMs Akte über dich. Manche findet man nur mit Absicht.",
+      findingNew: "BEFUND ERFASST",
+      findingsTally: "Befunde erfasst",
+      findingsLeft: "Noch nicht alle. V-TGM hat Platz in der Akte.",
+      back: "Zurück"
     },
     en: {
       cacheName: "Love On The First Log",
       cacheNameLines: ["Love On", "The First Log"],
       facility: "DIE KALIBRIERUNGSANLAGE",
-      sector: "SECTOR 12 - EMOTIONAL COMPATIBILITY",
+      sector: "SECTOR 7C - EMOTIONAL COMPATIBILITY DEPT.",
+      facilityTag: "PRECISION CALIBRATION FACILITY",
+      sectorTab: "7C",
       motto: "TESTEN. MESSEN. VERLIEBEN.",
-      subtitle: "Sector 12 of the Calibration Facility — with final coordinates",
+      subtitle: "Sector 7C of the Calibration Facility — with final coordinates",
       start: "▶ Begin assessment",
       resume: "▶ Continue",
       newGame: "Start over",
@@ -185,13 +197,19 @@ window.STORY = (function () {
       music: "Music",
       bootLines: [
         "CALIBRATION FACILITY - COLD START",
-        "SECTOR 12 ... EMOTIONAL COMPATIBILITY",
+        "SECTOR 7C ... ONLINE. AS ALWAYS.",
+        "EMOTIONAL COMPATIBILITY DEPT. ... DUSTED OFF",
         "TEST SUBJECTS 01 / 02 / 03 ... ONLINE",
         "MOBILE UNITS ... R-3MI, V-TGM",
-        "CERTIFICATION 7C ... VALID",
-        "SECTOR 12 UNLOCKED."
+        "DEPARTMENT UNLOCKED. REGRETTABLY."
       ],
-      needAll: "Pass all three assessments and the GPSr locks on."
+      needAll: "Pass all three assessments and the GPSr locks on.",
+      findings: "Findings",
+      findingsSub: "V-TGM's file on you. Some of these you only find on purpose.",
+      findingNew: "FINDING RECORDED",
+      findingsTally: "findings recorded",
+      findingsLeft: "Not all of them yet. V-TGM has room in the file.",
+      back: "Back"
     }
   };
 
@@ -220,8 +238,8 @@ window.STORY = (function () {
       who: "system", scene: "event", fx: "glitch",
       r3mi: "neutral/idle", vtgm: "neutral/idle",
       text: {
-        de: "SEKTOR 12 — EMOTIONALE VERTRÄGLICHKEIT. LETZTE KALIBRIERUNG: VOR SEHR LANGER ZEIT. BESUCHER ERKANNT.",
-        en: "SECTOR 12 — EMOTIONAL COMPATIBILITY. LAST CALIBRATION: A VERY LONG TIME AGO. VISITOR DETECTED."
+        de: "SEKTOR 7C — ABTEILUNG EMOTIONALE VERTRÄGLICHKEIT. LETZTE KALIBRIERUNG: VOR SEHR LANGER ZEIT. BESUCHER ERKANNT.",
+        en: "SECTOR 7C — EMOTIONAL COMPATIBILITY DEPARTMENT. LAST CALIBRATION: A VERY LONG TIME AGO. VISITOR DETECTED."
       },
       next: "pro2"
     },
@@ -229,16 +247,16 @@ window.STORY = (function () {
       who: "r3mi", scene: "event", r3mi: "happy/cheer", vtgm: "suspicious/idle",
       emote: { who: "r3mi", kind: "sparkle" },
       text: {
-        de: "„Oh! Ein Besucher! In Sektor 12! Weißt du, wie lange ich auf einen Besucher in Sektor 12 gewartet habe?“",
-        en: "“Oh! A visitor! In Sector 12! Do you know how long I have been waiting for a visitor in Sector 12?”"
+        de: "„Oh! Ein Besucher! In Sektor 7C! — Also, in Sektor 7C sind ständig Besucher. Hier passiert ja ALLES. Aber in DIESER Abteilung! Weißt du, wie lange ich darauf gewartet habe?“",
+        en: "“Oh! A visitor! In Sector 7C! — Well, Sector 7C has visitors all the time. EVERYTHING happens here. But in THIS department! Do you know how long I have waited for this?”"
       },
       next: "pro3"
     },
     pro3: {
       who: "vtgm", scene: "event", r3mi: "happy/present", vtgm: "annoyed/crossed",
       text: {
-        de: "Sektor 12 sollte nie wieder hochgefahren werden.",
-        en: "Sector 12 was never meant to come back online."
+        de: "Alles in dieser Anlage passiert in Sektor 7C. Die Rundheitsprüfungen. Das Pausenprotokoll. Diese Abteilung war die eine, die wir uns geeinigt hatten, nie wieder einzuschalten.",
+        en: "Everything in this facility happens in Sector 7C. The roundness tests. The break protocol. This department was the one we agreed never to switch back on."
       },
       next: "pro4"
     },
@@ -306,7 +324,7 @@ window.STORY = (function () {
       choices: [
         { t: { de: "Wartungsset zücken. Trockenes Logbuch, neuer O-Ring, frischer Bleistift.", en: "Produce a maintenance kit. Dry logbook, new O-ring, fresh pencil." }, to: "pe1a", aff: 2, log: 2, fx: "hearts" },
         { t: { de: "„2007? Da war ich noch nicht mal angemeldet.“", en: "“2007? I hadn't even signed up back then.”" }, to: "pe1b", aff: 1, log: 1 },
-        { t: { de: "„TFTC.“ Und weitergehen.", en: "“TFTC.” And walk on." }, to: "pe1c", aff: -2, log: -2 }
+        { t: { de: "„TFTC.“ Und weitergehen.", en: "“TFTC.” And walk on." }, to: "pe1c", aff: -2, log: -2, ach: "tftc" }
       ]
     },
     pe1a: {
@@ -344,7 +362,7 @@ window.STORY = (function () {
       choices: [
         { t: { de: "„Bleistift überlebt alles. Sogar Beziehungen.“", en: "“Pencil survives everything. Even relationships.”" }, to: "pe3", aff: 2, log: 2, fx: "hearts" },
         { t: { de: "Zustimmend nicken und nichts sagen.", en: "Nod in agreement and say nothing." }, to: "pe3", aff: 1, log: 0 },
-        { t: { de: "„Ich logge eigentlich nur noch digital.“", en: "“I only really log digitally these days.”" }, to: "pe3", aff: -1, log: -1 }
+        { t: { de: "„Ich logge eigentlich nur noch digital.“", en: "“I only really log digitally these days.”" }, to: "pe3", aff: -1, log: -1, ach: "digital" }
       ]
     },
     pe3: {
@@ -377,6 +395,11 @@ window.STORY = (function () {
         de: "Falsch. Ein Fund bleibt ein Fund. Der Owner braucht die Information, nicht die Bestrafung. Notiert.",
         en: "Wrong. A find is still a find. The owner needs the information, not the punishment. Noted."
       },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Wieder falsch. Ich habe dafür jetzt einen Ordner. Der Ordner hat einen Reiter. Auf dem Reiter steht dein Name.",
+        en: "Wrong again. I have a folder for this now. The folder has a tab. The tab has your name on it."
+      },
       next: "pe4"
     },
     pe4: {
@@ -388,9 +411,9 @@ window.STORY = (function () {
         en: "A Muggle with a dog comes round the oak. The dog has already found you. The Muggle still has hope."
       },
       choices: [
-        { t: { de: "Den Baum umarmen. Völlig normale Freizeitgestaltung.", en: "Hug the tree. A completely normal hobby." }, to: "pe5", aff: 2, log: 1 },
-        { t: { de: "Laut rufen: „Ich suche nur mein WLAN!“", en: "Shout: “I'm only looking for my Wi-Fi!”" }, to: "pe5", aff: 1, log: 0 },
-        { t: { de: "Petra vorschieben und „Pilze!“ rufen.", en: "Push Petra forward and yell “Mushrooms!”" }, to: "pe5", aff: -2, log: 0 }
+        { t: { de: "Den Baum umarmen. Völlig normale Freizeitgestaltung.", en: "Hug the tree. A completely normal hobby." }, to: "pe5", aff: 2, log: 1, ach: "treehug" },
+        { t: { de: "Laut rufen: „Ich suche nur mein WLAN!“", en: "Shout: “I'm only looking for my Wi-Fi!”" }, to: "pe5", aff: 1, log: 0, ach: "wifi" },
+        { t: { de: "Petra vorschieben und „Pilze!“ rufen.", en: "Push Petra forward and yell “Mushrooms!”" }, to: "pe5", aff: -2, log: 0, ach: "mushrooms" }
       ]
     },
     pe5: {
@@ -424,6 +447,11 @@ window.STORY = (function () {
       text: {
         de: "Sie hat dir ihre einzige Regel vor vier Minuten gesagt. Ich habe mitgeschrieben. Das gehört zu meinen Aufgaben.",
         en: "She told you her one rule four minutes ago. I wrote it down. That is part of my function."
+      },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Sie hat Bleistift gesagt. Sie sagt in jeder Prüfung Bleistift, seit diese Anlage steht. Sogar die Eiche weiß inzwischen, dass es Bleistift ist.",
+        en: "She said pencil. She has said pencil in every assessment since this facility was built. Even the oak knows it is pencil by now."
       },
       next: "pe6"
     },
@@ -460,7 +488,7 @@ window.STORY = (function () {
       choices: [
         { t: { de: "Sofort den Inspektionsspiegel auspacken.", en: "Get the inspection mirror out straight away." }, to: "na1a", aff: 2, log: 2, fx: "hearts" },
         { t: { de: "„Größe ist auch nur eine D/T-Wertung.“", en: "“Size is just another D/T rating.”" }, to: "na1b", aff: 2, log: 1 },
-        { t: { de: "Bolzenschneider zücken. Als Kompliment gemeint.", en: "Produce bolt cutters. Meant as a compliment." }, to: "na1c", aff: -2, log: -2 }
+        { t: { de: "Bolzenschneider zücken. Als Kompliment gemeint.", en: "Produce bolt cutters. Meant as a compliment." }, to: "na1c", aff: -2, log: -2, ach: "boltcutter" }
       ]
     },
     na1a: {
@@ -530,6 +558,11 @@ window.STORY = (function () {
         de: "Falsch herum. D ist das Finden, T ist der Weg. Ich erwähne das nur, weil dich sonst irgendwann ein Baum überrascht.",
         en: "The wrong way round. D is the finding, T is the getting there. I mention it only because otherwise a tree will surprise you one day."
       },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Difficulty. Terrain. Erst D, dann T. Das Alphabet ist schon länger in dieser Reihenfolge.",
+        en: "Difficulty. Terrain. D, then T. The alphabet has been in this order for some time."
+      },
       next: "na4"
     },
     na4: {
@@ -574,6 +607,11 @@ window.STORY = (function () {
         de: "Er hat dich als Allererstes darum gebeten. Es war seine einzige Bitte. Ich führe darüber Buch, das ist buchstäblich meine Aufgabe.",
         en: "He asked you that before anything else. It was his one request. I keep records of this. That is literally my function."
       },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Der Spiegel. Er wollte den Spiegel. Ich fange an, einen für dich mitzunehmen.",
+        en: "The mirror. He asked for the mirror. I am going to start carrying one for you."
+      },
       next: "na6"
     },
     na6: {
@@ -584,9 +622,9 @@ window.STORY = (function () {
         en: "A van pulls in. Nando — magnetic, tiny, romantically impulsive — attaches himself to the side door. The van drives away."
       },
       choices: [
-        { t: { de: "Hinterherrennen. Es sind nur 400 Meter. Und eine Ampel.", en: "Run after it. It's only 400 metres. And one traffic light." }, to: "na7", aff: 2, log: 1, fx: "sparks" },
+        { t: { de: "Hinterherrennen. Es sind nur 400 Meter. Und eine Ampel.", en: "Run after it. It's only 400 metres. And one traffic light." }, to: "na7", aff: 2, log: 1, fx: "sparks", ach: "chase" },
         { t: { de: "Das Kennzeichen notieren und dem Owner schreiben.", en: "Note the plate and message the owner." }, to: "na7", aff: 1, log: 2 },
-        { t: { de: "Ein Foto machen und „Cache is missing?“ loggen.", en: "Take a photo and log “Cache is missing?”" }, to: "na7", aff: -2, log: -2 }
+        { t: { de: "Ein Foto machen und „Cache is missing?“ loggen.", en: "Take a photo and log “Cache is missing?”" }, to: "na7", aff: -2, log: -2, ach: "missing" }
       ]
     },
     na7: {
@@ -608,8 +646,8 @@ window.STORY = (function () {
       },
       choices: [
         { t: { de: "„LOVE.“ ROT13. Es ist immer ROT13.", en: "“LOVE.” ROT13. It is always ROT13." }, to: "my1a", aff: 3, log: 2, right: true, fx: "hearts" },
-        { t: { de: "„Ist das Walisisch?“", en: "“Is that Welsh?”" }, to: "my1b", aff: 0, log: 0 },
-        { t: { de: "„Ich gebe auf. Gib mir den Hint.“", en: "“I give up. Give me the hint.”" }, to: "my1c", aff: 1, log: 0 }
+        { t: { de: "„Ist das Walisisch?“", en: "“Is that Welsh?”" }, to: "my1b", aff: 0, log: 0, ach: "welsh" },
+        { t: { de: "„Ich gebe auf. Gib mir den Hint.“", en: "“I give up. Give me the hint.”" }, to: "my1c", aff: 1, log: 0, ach: "ebg13" }
       ],
       quiz: true
     },
@@ -679,6 +717,11 @@ window.STORY = (function () {
         de: "Zwei Meilen sind 3,2 Kilometer. Deine Lösung liegt außerhalb. Das ist fast immer ein Rechenfehler, und fast nie die Schuld des Owners.",
         en: "Two miles is 3.2 kilometres. Your solution falls outside it. That is nearly always an arithmetic error, and nearly never the owner's fault."
       },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Zwei Meilen. 3,2 Kilometer. Ich habe es R-3MI aufs Gehäuse geschrieben. Sie freut sich darüber, was nicht der Sinn war.",
+        en: "Two miles. 3.2 kilometres. I have written it on R-3MI's casing. She is delighted about it, which was not the point."
+      },
       next: "my4"
     },
     my4: {
@@ -689,7 +732,7 @@ window.STORY = (function () {
       },
       choices: [
         { t: { de: "Ein Spreadsheet öffnen. Das ist meine Liebessprache.", en: "Open a spreadsheet. That is my love language." }, to: "my5", aff: 2, log: 2, fx: "sparks" },
-        { t: { de: "In jedes Feld „42“ schreiben und hoffen.", en: "Put “42” in every field and hope." }, to: "my5", aff: 1, log: 0 },
+        { t: { de: "In jedes Feld „42“ schreiben und hoffen.", en: "Put “42” in every field and hope." }, to: "my5", aff: 1, log: 0, ach: "fortytwo" },
         { t: { de: "Im Listing nach einem versehentlichen Spoiler suchen.", en: "Scan the listing for an accidental spoiler." }, to: "my5", aff: -1, log: 1 }
       ]
     },
@@ -722,6 +765,11 @@ window.STORY = (function () {
         de: "Sie hat es zweimal gesagt. Einmal beiläufig, einmal deutlich. Das war der Test. Sie stellt ihn immer, und fast niemand merkt, dass er läuft.",
         en: "She said it twice. Once in passing, once plainly. That was the test. She always runs it, and almost nobody notices it is running."
       },
+      /* shown instead of `text` from the second visit on */
+      again: {
+        de: "Zweieinhalb Jahre. Sie sagt es jedes Mal. Es ist das einzige Rätsel dieser Anlage, das dir die Antwort gibt, bevor es die Frage stellt.",
+        en: "Two and a half years. She says it every time. It is the only puzzle in this facility that gives you the answer before it asks the question."
+      },
       next: "my6"
     },
     my6: {
@@ -751,8 +799,8 @@ window.STORY = (function () {
       who: "system", scene: "finale", fx: "glitch",
       r3mi: "happy/present", vtgm: "neutral/idle",
       text: {
-        de: "SEKTOR 12 — ALLE DREI PRÜFUNGEN BESTANDEN. EMOTIONALE VERTRÄGLICHKEIT: NACHGEWIESEN. ZERTIFIZIERUNG 7C ERTEILT.",
-        en: "SECTOR 12 — ALL THREE ASSESSMENTS PASSED. EMOTIONAL COMPATIBILITY: DEMONSTRATED. CERTIFICATION 7C GRANTED."
+        de: "SEKTOR 7C — ALLE DREI PRÜFUNGEN BESTANDEN. EMOTIONALE VERTRÄGLICHKEIT: NACHGEWIESEN. ZERTIFIZIERUNG ERTEILT. DIE ABTEILUNG DARF WIEDER AUSGESCHALTET WERDEN.",
+        en: "SECTOR 7C — ALL THREE ASSESSMENTS PASSED. EMOTIONAL COMPATIBILITY: DEMONSTRATED. CERTIFICATION GRANTED. THE DEPARTMENT MAY NOW BE SWITCHED OFF AGAIN."
       },
       next: "fin2"
     },
@@ -872,19 +920,273 @@ window.STORY = (function () {
 
   const logTemplate = {
     de: [
-      "Found it! Nach {dates} Prüfungen in Sektor 12, einem Muggel mit Hund,",
+      "Found it! Nach {dates} Prüfungen in Sektor 7C, einem Muggel mit Hund,",
       "einem Gullygitter und einem Brombeerbusch: eingeloggt.",
       "Zuneigung {aff}, Log-Qualität {log}. Danke an Petra für den O-Ring,",
       "an Nando fürs Kleinsein und an Mysti dafür, dass sie mir den Hint",
       "in ROT13 gegeben hat. R-3MI und V-TGM: ihr seid die Anlage. TFTC!"
     ],
     en: [
-      "Found it! After {dates} assessments in Sector 12, one Muggle with a dog,",
+      "Found it! After {dates} assessments in Sector 7C, one Muggle with a dog,",
       "one drain grate and one blackberry bush: signed.",
       "Affection {aff}, log quality {log}. Thanks to Petra for the O-ring,",
       "to Nando for being small, and to Mysti for giving me the hint in",
       "ROT13. R-3MI and V-TGM: you are the facility. TFTC!"
     ]
+  };
+
+
+  /* ------------------------------------------------------------------
+   * Hub banter.
+   *
+   * What the units say when you come back to the hub. One line per
+   * visit, picked by what just happened, and never the same line twice
+   * until its pool has run out. `{dates}` is the number of assessments
+   * taken so far.
+   * ------------------------------------------------------------------ */
+  const banter = {
+    first: [
+      { who: "r3mi", mood: "happy/present",
+        text: { de: "„Drei Prüfkörper, alle frisch kalibriert! Also, ich habe sie abgestaubt. Kalibrieren ist ein großes Wort.“",
+                en: "“Three test subjects, all freshly calibrated! Well, I dusted them. Calibrate is a big word.”" } }
+    ],
+    any: [
+      { who: "vtgm", mood: "neutral/point",
+        text: { de: "Fürs Protokoll: Diese Abteilung teilt sich eine Wand mit dem Rundheitslabor. Falls du Schreie hörst: Das ist eine Kugel.",
+                en: "For the record: this department shares a wall with the roundness lab. If you hear screaming, that is a sphere." } },
+      { who: "r3mi", mood: "happy/cheer",
+        text: { de: "„V-TGM hat eine Pro-und-Contra-Liste über dich angefangen! Die Contra-Seite ist länger, aber die Pro-Seite hat Herzchen!“",
+                en: "“V-TGM has started a pros-and-cons list about you! The cons side is longer, but the pros side has little hearts!”" } },
+      { who: "vtgm", mood: "annoyed/crossed",
+        text: { de: "Ich habe beantragt, diese Abteilung wieder abzuschalten. Der Antrag liegt in der Warteschlange hinter dem Pausenprotokoll. Das Pausenprotokoll macht Pause.",
+                en: "I have filed a request to switch this department off again. It is queued behind the break protocol. The break protocol is on a break." } },
+      { who: "r3mi", mood: "happy/idle",
+        text: { de: "„Weißt du, was das Schönste am Geocaching ist? Man darf in fremden Hecken wühlen, und es heißt Hobby!“",
+                en: "“You know the best thing about geocaching? You get to rummage in strangers' hedges and it's called a hobby!”" } },
+      { who: "vtgm", mood: "neutral/idle",
+        text: { de: "Statistisch enden die meisten Beziehungen in dieser Abteilung damit, dass jemand „TFTC“ schreibt. Ich hätte gern, dass du die Ausnahme bist. Vor allem für meine Unterlagen.",
+                en: "Statistically, most relationships in this department end with somebody writing “TFTC”. I would like you to be the exception. Mostly for my records." } },
+      { who: "r3mi", mood: "curious/think",
+        text: { de: "„Ich habe die Prüfkörper gefragt, was sie von dir halten. Petra hat ‚wasserdicht?‘ gefragt, Nando hat ‚klein?‘ gefragt, und Mysti hat mir ein Rätsel geschickt. Ich löse es noch.“",
+                en: "“I asked the test subjects what they think of you. Petra asked ‘waterproof?', Nando asked ‘small?', and Mysti sent me a puzzle. I'm still solving it.”" } },
+      { who: "vtgm", mood: "annoyed/idle",
+        text: { de: "R-3MI nennt die drei „Prüfkörper 01, Prüfkörper 02 und Schatzi“. Ich habe es viermal korrigiert. Es steht inzwischen so im Handbuch.",
+                en: "R-3MI calls them “Test Subject 01, Test Subject 02 and Sweetie”. I have corrected it four times. It is in the manual that way now." } },
+      { who: "r3mi", mood: "curious/point",
+        text: { de: "„Kleiner Tipp von mir: Hör genau zu! Die Prüfkörper sagen dir immer, was sie wollen. Menschen machen das sonst nie!“",
+                en: "“A little tip from me: listen closely! The test subjects always tell you what they want. Humans never do that!”" } },
+      { who: "vtgm", mood: "neutral/idle",
+        text: { de: "Die Kaffeemaschine der Anlage steht ebenfalls in Sektor 7C. Sie wurde elfmal kalibriert. Sie macht immer noch Tee.",
+                en: "The facility's coffee machine is also in Sector 7C. It has been calibrated eleven times. It still makes tea." } },
+      { who: "r3mi", mood: "happy/present",
+        text: { de: "„In Sektor 7C passiert einfach ALLES! Gestern hat jemand im Flur eine Kugel vermessen, heute verliebst du dich in eine Dose. Ich liebe meinen Arbeitsplatz!“",
+                en: "“EVERYTHING happens in Sector 7C! Yesterday someone measured a sphere in the corridor, today you're falling for a container. I love my workplace!”" } }
+    ],
+    many: [
+      { who: "vtgm", mood: "suspicious/idle",
+        text: { de: "Das ist Prüfung Nummer {dates}. Die Prüfkörper haben eine Gruppe gegründet. Ich bin drin. Es geht um dich.",
+                en: "This is assessment number {dates}. The test subjects have started a group chat. I am in it. It is about you." } },
+      { who: "r3mi", mood: "happy/cheer",
+        text: { de: "„Du bist so oft hier, ich habe dir einen Parkplatz reserviert! Also, eine Bodenfläche. Mit Kreide. Da steht ‚Stammgast‘ und ein Herz.“",
+                en: "“You're here so often I've reserved you a parking space! Well, a patch of floor. In chalk. It says ‘regular' and there's a heart.”" } }
+    ],
+    gold: [
+      { who: "r3mi", mood: "proud/cheer",
+        text: { de: "„BESTANDEN! Ich habe konfettimäßig reagiert! Also innerlich. Äußerlich habe ich leider keine Konfettikanone. Noch nicht.“",
+                en: "“PASSED! I reacted confettily! Internally. Externally I don't have a confetti cannon. Yet.”" } },
+      { who: "vtgm", mood: "happy/idle",
+        text: { de: "Bestanden. Ich habe es ins Protokoll eingetragen, ins Backup-Protokoll und in ein kleines privates Protokoll, über das ich nicht spreche.",
+                en: "A pass. I have entered it in the record, the backup record, and a small private record I do not discuss." } },
+      { who: "r3mi", mood: "happy/present",
+        text: { de: "„Deine Ziffern leuchten jetzt im GPS! Ich habe dreimal draufgeschaut. Sie leuchten jedes Mal!“",
+                en: "“Your digits are glowing in the GPSr now! I checked three times. They glow every time!”" } }
+    ],
+    twoGold: [
+      { who: "r3mi", mood: "happy/cheer",
+        text: { de: "„Zwei von drei! Das GPS summt schon. Ich summe auch. Wir summen zusammen!“",
+                en: "“Two out of three! The GPSr is humming already. I'm humming too. We're humming together!”" } },
+      { who: "vtgm", mood: "neutral/point",
+        text: { de: "Zwei bestanden. Noch eine, und ich muss ein Zertifikat ausstellen. Ich übe schon meine Handschrift. Sie ist hervorragend.",
+                en: "Two passed. One more and I have to issue a certificate. I have been practising my handwriting. It is excellent." } }
+    ],
+    fail: [
+      { who: "vtgm", mood: "annoyed/crossed",
+        text: { de: "Das lief nicht gut. Ich sage nicht, dass ich es vorhergesagt habe. Es steht schriftlich, dass ich es vorhergesagt habe.",
+                en: "That did not go well. I will not say I predicted it. It is in writing that I predicted it." } },
+      { who: "r3mi", mood: "happy/present",
+        text: { de: "„Nicht traurig sein! Auch ein DNF ist ein Log! Und Logs sind Liebesbriefe an die Zukunft!“",
+                en: "“Don't be sad! A DNF is still a log! And logs are love letters to the future!”" } },
+      { who: "vtgm", mood: "neutral/point",
+        text: { de: "Ein Hinweis, weil R-3MI mich sonst weiter so ansieht: Sie haben dir vorher Dinge erzählt. Wer sich Dinge merkt, besteht.",
+                en: "A hint, because R-3MI will not stop looking at me: they told you things earlier. People who remember things pass." } },
+      { who: "r3mi", mood: "proud/hips",
+        text: { de: "„Weißt du, wie oft wir die Kaffeemaschine kalibriert haben? Elfmal! Und sie macht immer noch Tee! Man gibt nicht auf!“",
+                en: "“Do you know how often we've calibrated the coffee machine? Eleven times! And it still makes tea! You don't give up!”" } }
+    ],
+    allGold: [
+      { who: "r3mi", mood: "proud/cheer",
+        text: { de: "„Alle drei! ALLE DREI! Das Final wartet! Geh, geh, geh! Aber schreib einen schönen Log!“",
+                en: "“All three! ALL THREE! The final is waiting! Go, go, go! But write a nice log!”" } },
+      { who: "vtgm", mood: "neutral/idle",
+        text: { de: "Alle drei bestanden. Das GPS ist fixiert. Es gibt nichts mehr zu messen, und ich stelle fest, dass mir das nicht gefällt.",
+                en: "All three passed. The GPSr is locked. There is nothing left to measure, and I find that I do not enjoy it." } }
+    ]
+  };
+
+  /* ------------------------------------------------------------------
+   * Retakes.
+   *
+   * Taking an assessment again opens with the subject noticing. [0] is
+   * the second attempt, [1] the third, [2] every one after that;
+   * `gold` is for coming back to one you have already passed.
+   * ------------------------------------------------------------------ */
+  const retakes = {
+    petra: {
+      again: [
+        { who: "petra", r3mi: "happy/idle", vtgm: "neutral/idle",
+          text: { de: "„Oh. Du schon wieder.“ Petra hält den Petling hoch. „Ich habe ihn extra nochmal nass gemacht. Damit es authentisch ist.“",
+                  en: "“Oh. You again.” Petra holds up the petling. “I made it wet again specially. So it's authentic.”" } },
+        { who: "vtgm", r3mi: "happy/present", vtgm: "neutral/point",
+          text: { de: "Dritter Versuch. Petra nennt dich inzwischen „Stammgast“. Die Eiche nennt dich gar nichts, weil sie eine Eiche ist.",
+                  en: "Third attempt. Petra has started calling you “the regular”. The oak calls you nothing, because it is an oak." } },
+        { who: "petra", r3mi: "happy/cheer", vtgm: "neutral/idle",
+          text: { de: "„Ich habe dir einen eigenen Platz im Logbuch reserviert. Seite drei. Die ganze Seite. Trocken.“",
+                  en: "“I've reserved you your own spot in the logbook. Page three. The whole page. Dry.”" } }
+      ],
+      gold: { who: "petra", r3mi: "happy/cheer", vtgm: "happy/idle",
+        text: { de: "„Du kommst zurück, obwohl du schon bestanden hast? Das ist … das ist ein Wartungsbesuch. Das ist das Romantischste, was es gibt.“",
+                en: "“You came back even though you already passed? That's… that's a maintenance visit. That is the most romantic thing there is.”" } }
+    },
+    nando: {
+      again: [
+        { who: "nando", r3mi: "happy/idle", vtgm: "neutral/idle",
+          text: { de: "„Hi. Wieder ich. Immer noch vier Zentimeter. Ich bin nicht gewachsen, falls du das gehofft hattest.“",
+                  en: "“Hi. Me again. Still four centimetres. I haven't grown, in case you were hoping.”" } },
+        { who: "vtgm", r3mi: "happy/present", vtgm: "suspicious/idle",
+          text: { de: "Nando hat mich gefragt, ob du jetzt „ein Trackable“ bist. Ich habe erklärt, dass Trackables von anderen bewegt werden. Er fand das romantisch. Das war nicht meine Absicht.",
+                  en: "Nando asked me whether you are “a trackable now”. I explained that trackables are moved by other people. He found that romantic. That was not my intention." } },
+        { who: "nando", r3mi: "curious/point", vtgm: "neutral/idle",
+          text: { de: "„Ich hänge heute extra an einem niedrigeren Schild. Damit du nicht so weit greifen musst. Mit dem Spiegel. Du benutzt doch den Spiegel?“",
+                  en: "“I'm on a lower sign today, on purpose. So you don't have to reach as far. With the mirror. You are using the mirror?”" } }
+      ],
+      gold: { who: "nando", r3mi: "happy/cheer", vtgm: "happy/idle",
+        text: { de: "„Du bist zurückgekommen! Niemand kommt zu einem Nano zurück! Zu Nanos kommen Leute höchstens mit Werkzeug zurück!“",
+                en: "“You came back! Nobody comes back to a nano! People come back to nanos with tools, at most!”" } }
+    },
+    mysti: {
+      again: [
+        { who: "mysti", r3mi: "curious/think", vtgm: "neutral/idle",
+          text: { de: "„Du bist wieder da. Interessant.“ Mysti dreht das Schild um. Auf der Rückseite steht ebenfalls YBIR. „Das ist kein Hinweis. Oder doch.“",
+                  en: "“You're back. Interesting.” Mysti turns the sign over. The back also says YBIR. “That is not a hint. Or is it.”" } },
+        { who: "vtgm", r3mi: "happy/present", vtgm: "suspicious/idle",
+          text: { de: "Mysti hat einen 48. Tab geöffnet. Er handelt von dir. Es ist eine Tabelle. Mit bedingter Formatierung.",
+                  en: "Mysti has opened a 48th tab. It is about you. It is a spreadsheet. It has conditional formatting." } },
+        { who: "mysti", r3mi: "curious/point", vtgm: "neutral/idle",
+          text: { de: "„Ich habe ausgerechnet, wie oft du noch kommen wirst. Die Zahl steht in ROT13 auf meinem Handrücken. Nein, du darfst nicht gucken.“",
+                  en: "“I've calculated how many more times you'll come back. The number is written in ROT13 on the back of my hand. No, you may not look.”" } }
+      ],
+      gold: { who: "mysti", r3mi: "happy/cheer", vtgm: "happy/idle",
+        text: { de: "„Du löst ein Rätsel, das du schon gelöst hast. Entweder bist du gründlich, oder du bist verliebt. In meinen Tabellen ist beides dieselbe Farbe.“",
+                en: "“You are solving a puzzle you have already solved. Either you're thorough or you're in love. In my spreadsheets they're the same colour.”" } }
+    }
+  };
+
+  /* ------------------------------------------------------------------
+   * Findings — V-TGM's file on you.
+   *
+   * Collectibles for the curious. They survive "start over" on purpose:
+   * the whole point is to come back and try the answers you did not
+   * pick. Locked ones show `hint` instead of their title and text.
+   * Choice-based ones are awarded by `ach` on the choice; the rest are
+   * awarded by the engine, and the comment says where.
+   * ------------------------------------------------------------------ */
+  const findings = [
+    { id: "firstpass", icon: "★",
+      title: { de: "Erste Ziffern", en: "First digits" },
+      text: { de: "Das GPS hat zum ersten Mal geleuchtet. R-3MI hat dreimal nachgeschaut.", en: "The GPSr lit up for the first time. R-3MI checked three times." },
+      hint: { de: "Bestehe eine Prüfung.", en: "Pass an assessment." } },
+    { id: "certified", icon: "7C",           /* engine: reaching the reveal */
+      title: { de: "Zertifiziert in 7C", en: "Certified in 7C" },
+      text: { de: "Die Abteilung darf wieder abgeschaltet werden. Sie will aber nicht.", en: "The department may be switched off again. It does not want to be." },
+      hint: { de: "Bestehe alle drei.", en: "Pass all three." } },
+    { id: "perfect", icon: "◎",              /* engine: best possible score */
+      title: { de: "Präzisionskalibriert", en: "Precision-calibrated" },
+      text: { de: "Keine einzige Abweichung. Die Anlage wusste kurz nicht, was sie sagen soll.", en: "Not a single deviation. The facility briefly did not know what to say." },
+      hint: { de: "Bestehen ist nicht dasselbe wie perfekt.", en: "Passing is not the same as perfect." } },
+    { id: "bronze", icon: "✕",               /* engine: a FAILED record */
+      title: { de: "Emotional wasserdicht", en: "Emotionally waterproof" },
+      text: { de: "Durchgefallen. Richtig durchgefallen. V-TGM war fast beeindruckt.", en: "Failed. Properly failed. V-TGM was almost impressed." },
+      hint: { de: "Man kann eine Prüfung auch anders beenden.", en: "There are other ways to finish an assessment." } },
+    { id: "vtgmfile", icon: "▤",             /* engine: five wrong quiz answers */
+      title: { de: "V-TGMs Lieblingsakte", en: "V-TGM's favourite file" },
+      text: { de: "Fünf falsche Antworten. V-TGM hat dir einen eigenen Ordner angelegt. Er ist farbcodiert.", en: "Five wrong answers. V-TGM has opened a folder just for you. It is colour-coded." },
+      hint: { de: "Gib V-TGM etwas zum Mitschreiben.", en: "Give V-TGM something to write down." } },
+    { id: "regular", icon: "↻",              /* engine: third attempt at one route */
+      title: { de: "Stammgast", en: "The regular" },
+      text: { de: "Dreimal dieselbe Prüfung. Man kennt dich jetzt beim Vornamen.", en: "The same assessment three times. They know you by your first name now." },
+      hint: { de: "Versuch's nochmal. Und nochmal.", en: "Try again. And again." } },
+    { id: "maintenance", icon: "⚙",          /* engine: retaking a passed route */
+      title: { de: "Wartungsbesuch", en: "Maintenance visit" },
+      text: { de: "Du bist zurückgekommen, obwohl du nicht musstest. Das Romantischste im ganzen Hobby.", en: "You came back when you did not have to. The most romantic thing in the whole hobby." },
+      hint: { de: "Kehre zurück, wenn du nicht musst.", en: "Return when you don't have to." } },
+    { id: "bilingual", icon: "⇄",            /* engine: language switch mid-assessment */
+      title: { de: "Zweisprachig", en: "Bilingual" },
+      text: { de: "R-3MI spricht trotzdem Deutsch. V-TGM spricht trotzdem Englisch. Das ist Kanon.", en: "R-3MI still speaks German. V-TGM still speaks English. That is canon." },
+      hint: { de: "Wechsle mitten im Gespräch.", en: "Switch mid-conversation." } },
+    { id: "logger", icon: "✎",               /* engine: copying the final log */
+      title: { de: "Ein echter Log", en: "A proper log" },
+      text: { de: "Mit Absätzen. Nando wäre stolz.", en: "With paragraphs. Nando would be proud." },
+      hint: { de: "Am Ende wird geschrieben.", en: "At the end, there is writing to do." } },
+    { id: "tftc",
+      title: { de: "Vier Zeichen", en: "Four characters" },
+      text: { de: "TFTC. Petra hat es gesehen. Die Eiche auch.", en: "TFTC. Petra saw. So did the oak." },
+      hint: { de: "Fass dich so kurz wie möglich.", en: "Be as brief as possible." } },
+    { id: "digital",
+      title: { de: "Digital Native", en: "Digital native" },
+      text: { de: "Petra hat den Petling daraufhin etwas fester gehalten.", en: "Petra held the petling a little tighter after that." },
+      hint: { de: "Gestehe eine moderne Sünde.", en: "Confess a modern sin." } },
+    { id: "treehug",
+      title: { de: "Baumumarmer", en: "Tree hugger" },
+      text: { de: "Völlig normale Freizeitgestaltung. Der Muggel ist nicht überzeugt. Die Eiche schon.", en: "A completely normal hobby. The Muggle is not convinced. The oak is." },
+      hint: { de: "Muggel? Tarnung!", en: "Muggle? Camouflage!" } },
+    { id: "wifi",
+      title: { de: "Auf WLAN-Suche", en: "Looking for Wi-Fi" },
+      text: { de: "Der Muggel hat dir sein Passwort gegeben. Es war falsch.", en: "The Muggle gave you his password. It was wrong." },
+      hint: { de: "Eine technische Ausrede.", en: "A technical excuse." } },
+    { id: "mushrooms",
+      title: { de: "Pilzsachverständig", en: "Mycologist" },
+      text: { de: "Du hast dein Date einem Muggel geopfert. V-TGM hat es notiert. Zweimal.", en: "You sacrificed your date to a Muggle. V-TGM wrote it down. Twice." },
+      hint: { de: "Manchmal muss jemand anders vorgehen.", en: "Sometimes someone else has to go first." } },
+    { id: "boltcutter",
+      title: { de: "Bolzenschneider-Romantik", en: "Bolt-cutter romance" },
+      text: { de: "Als Kompliment gemeint. Nicht als Kompliment angekommen.", en: "Meant as a compliment. Not received as one." },
+      hint: { de: "Bring das falsche Werkzeug mit.", en: "Bring the wrong tool." } },
+    { id: "chase",
+      title: { de: "400 Meter Liebe", en: "400 metres of love" },
+      text: { de: "Und eine Ampel. Die Ampel war auf deiner Seite.", en: "And one traffic light. The light was on your side." },
+      hint: { de: "Manche Dates muss man verfolgen.", en: "Some dates you have to chase." } },
+    { id: "missing",
+      title: { de: "Cache is missing?", en: "Cache is missing?" },
+      text: { de: "Er war nicht verschwunden. Er war in einem Transporter. Das ist ein Unterschied.", en: "He was not missing. He was in a van. There is a difference." },
+      hint: { de: "Logge vorschnell.", en: "Log too soon." } },
+    { id: "welsh",
+      title: { de: "Walisisch für Anfänger", en: "Welsh for beginners" },
+      text: { de: "Mysti behält das im Kopf. Für ein anderes Rätsel. Nicht für dich.", en: "Mysti is keeping it in mind. For another puzzle. Not for you." },
+      hint: { de: "Rate die Sprache.", en: "Guess the language." } },
+    { id: "ebg13",
+      title: { de: "EBG13", en: "EBG13" },
+      text: { de: "Der Hint war auch ROT13. Der Hint ist immer auch ROT13.", en: "The hint was ROT13 too. The hint is always ROT13 too." },
+      hint: { de: "Gib auf. Ehrlich.", en: "Give up. Honestly." } },
+    { id: "fortytwo",
+      title: { de: "42", en: "42" },
+      text: { de: "Die Antwort auf alles. Außer auf Mystis Rätsel.", en: "The answer to everything. Except Mysti's puzzle." },
+      hint: { de: "Du weißt, welche Zahl.", en: "You know which number." } }
+  ];
+
+  /* What V-TGM says over the file. */
+  const findingsIntro = {
+    de: "Ich führe Buch über dich. Das ist buchstäblich meine Aufgabe. Hier ist die Akte.",
+    en: "I keep records on you. That is literally my function. Here is the file."
   };
 
   return {
@@ -896,6 +1198,10 @@ window.STORY = (function () {
     rankTexts: rankTexts,
     rankComment: rankComment,
     logTemplate: logTemplate,
+    banter: banter,
+    retakes: retakes,
+    findings: findings,
+    findingsIntro: findingsIntro,
     GOLD: GOLD,
     SILVER: SILVER,
     ROUTE_MAX: ROUTE_MAX,

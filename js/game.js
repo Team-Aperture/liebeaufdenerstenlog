@@ -6,6 +6,8 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const SAVE_KEY = "liebe-auf-den-ersten-log/v3";
+  /* Findings live under their own key so "start over" leaves them be. */
+  const FINDINGS_KEY = "liebe-auf-den-ersten-log/findings";
 
   const REDUCED = window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -28,7 +30,12 @@
     ranks: {},                 /* route -> gold | silver | bronze          */
     scores: {},                /* route -> { aff, log }                    */
     result: null,              /* the assessment record currently on screen */
-    dates: 0
+    dates: 0,
+    attempts: {},              /* route -> times started                   */
+    visits: {},                /* node id -> visits, for `again` lines      */
+    wrong: 0,                  /* quiz answers missed, ever                 */
+    seenBanter: {},            /* banter pool -> indices already used       */
+    hubLine: null              /* { pool, i } — the line the hub is showing */
   });
 
   let state = freshState();
@@ -54,9 +61,59 @@
   const goldRoutes = () => STORY.routes.filter((r) => state.ranks[r] === "gold");
 
   const isSpecial = (id) =>
-    id === "hub" || id === "reveal" || String(id).indexOf("END:") === 0;
+    id === "hub" || id === "reveal" || id === "FINDINGS" ||
+    String(id).indexOf("END:") === 0 || String(id).indexOf("RETRY:") === 0;
 
   const sfx = (name, arg) => AUDIO.play(name, arg);
+
+  /* ------------------------------------------------------------------
+   * Findings — collectibles that outlive a reset
+   * ------------------------------------------------------------------ */
+  let found = {};
+  try { found = JSON.parse(localStorage.getItem(FINDINGS_KEY) || "{}") || {}; }
+  catch (_) { found = {}; }
+
+  const toastQueue = [];
+  let toastBusy = false;
+
+  function award(id) {
+    if (found[id]) return;
+    const def = STORY.findings.find((f) => f.id === id);
+    if (!def) return;
+    found[id] = Date.now();
+    try { localStorage.setItem(FINDINGS_KEY, JSON.stringify(found)); } catch (_) {}
+    toastQueue.push(def);
+    if (!toastBusy) nextToast();
+  }
+
+  function nextToast() {
+    const def = toastQueue.shift();
+    if (!def) { toastBusy = false; return; }
+    toastBusy = true;
+    let el = $("toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "toast";
+      el.className = "finding-toast";
+      el.setAttribute("role", "status");
+      el.setAttribute("aria-live", "polite");
+      document.body.appendChild(el);
+    }
+    const n = STORY.findings.indexOf(def) + 1;
+    el.replaceChildren();
+    const k = document.createElement("small");
+    k.textContent = t().findingNew + " · #" + String(n).padStart(2, "0");
+    const b = document.createElement("b");
+    b.textContent = (def.icon ? def.icon + " " : "") + tr(def.title);
+    el.append(k, b);
+    el.classList.remove("show");
+    void el.offsetWidth;                /* restart the animation */
+    el.classList.add("show");
+    sfx("ping", 3);
+    setTimeout(() => { el.classList.remove("show"); setTimeout(nextToast, 350); }, 2600);
+  }
+
+  const foundCount = () => STORY.findings.filter((f) => found[f.id]).length;
 
   /* ------------------------------------------------------------------
    * Canvas
@@ -315,17 +372,85 @@
    * Navigation
    * ------------------------------------------------------------------ */
   function goto(id) {
+    const from = state.node;
+    const node = STORY.nodes[id];
+    if (node && node.again) state.visits[id] = (state.visits[id] || 0) + 1;
+    /* A new line only when actually arriving — not when coming back
+     * from the findings file, and never on a re-render. */
+    if (id === "hub" && from !== "hub" && from !== "FINDINGS") pickBanter();
+    if (id === "FINDINGS" && from !== "FINDINGS") state.findingsFrom = from;
     state.node = id;
     save();
     render();
   }
 
+  /* ------------------------------------------------------------------
+   * Hub banter: what the units say when you come back
+   * ------------------------------------------------------------------ */
+  function pickBanter() {
+    const gold = goldRoutes().length;
+    const last = state.result;
+    let pool;
+    if (GEO.complete(goldRoutes())) pool = "allGold";
+    else if (last && last.rank === "gold") pool = gold === 2 ? "twoGold" : "gold";
+    else if (last) pool = "fail";
+    else if (!state.dates) pool = "first";
+    else if (state.dates >= 6 &&
+             (state.seenBanter.many || []).length < STORY.banter.many.length) pool = "many";
+    else pool = "any";
+    /* After a result has been talked about once, it is old news. */
+    state.result = null;
+
+    const lines = STORY.banter[pool];
+    let seen = state.seenBanter[pool] || [];
+    if (seen.length >= lines.length) seen = [];
+    let i = 0;
+    while (seen.indexOf(i) !== -1) i++;
+    state.seenBanter[pool] = seen.concat(i);
+    state.hubLine = { pool: pool, i: i };
+  }
+
   function startRoute(route) {
-    state.cur = { route: route, aff: 0, log: 0 };
+    const passed = state.ranks[route] === "gold";
+    state.attempts[route] = (state.attempts[route] || 0) + 1;
+    state.cur = { route: route, aff: 0, log: 0, missed: 0 };
     SCENES.enter(route);
     SCENES.enter("you");
-    goto(STORY.entry[route]);
+    if (passed) award("maintenance");
+    if (state.attempts[route] >= 3) award("regular");
+    /* Coming back makes them notice: a short retake beat first. */
+    goto(passed || state.attempts[route] > 1 ? "RETRY:" + route : STORY.entry[route]);
   }
+
+  /** The beat that opens a retake, built from STORY.retakes. */
+  function retakeNode(route) {
+    const R = STORY.retakes[route];
+    const line = state.ranks[route] === "gold"
+      ? R.gold
+      : R.again[Math.min(R.again.length - 1, Math.max(0, (state.attempts[route] || 2) - 2))];
+    return Object.assign({ route: route, scene: STORY.routeMeta[route].scene,
+                           next: STORY.entry[route] }, line);
+  }
+
+  /* The best aff+log any path through a route can reach. Worked out
+   * from the script rather than hard-coded, so editing a beat's scores
+   * never leaves the "perfect" finding unreachable. */
+  const bestScore = {};
+  STORY.routes.forEach((r) => {
+    const memo = {};
+    const walk = (id) => {
+      if (id in memo) return memo[id];
+      memo[id] = 0;                     /* guards against a loop */
+      const n = STORY.nodes[id];
+      let best = 0;
+      if (n && n.choices) {
+        best = Math.max.apply(null, n.choices.map((c) =>
+          (c.aff || 0) + (c.log || 0) + walk(c.to)));
+      } else if (n && n.next) best = walk(n.next);
+      return (memo[id] = best);
+    };
+    bestScore[r] = walk(STORY.entry[r]);
+  });
 
   function rankOf(aff, log) {
     if (aff >= STORY.GOLD.aff && log >= STORY.GOLD.log) return "gold";
@@ -354,6 +479,10 @@
     state.dates += 1;
     state.cur = null;
     state.result = { route: route, rank: rank, aff: score.aff, log: score.log };
+
+    if (rank === "gold") award("firstpass");
+    if (rank === "bronze") award("bronze");
+    if (score.aff + score.log >= bestScore[route]) award("perfect");
 
     if (rank === "gold") {
       SCENES.burstHearts(190, 92, 22);
@@ -384,8 +513,13 @@
     if ((c.aff || 0) < 0) sfx("deny");
     if (node.quiz) {
       SCENES.showEmote(c.right ? "r3mi" : "vtgm", c.right ? "sparkle" : "anger");
-      if (!c.right) SCENES.flash("#c0322c", 0.28);
+      if (!c.right) {
+        SCENES.flash("#c0322c", 0.28);
+        state.wrong += 1;
+        if (state.wrong >= 5) award("vtgmfile");
+      }
     }
+    if (c.ach) award(c.ach);
     goto(c.to);
   }
 
@@ -393,7 +527,8 @@
    * Render: one function, driven entirely by state
    * ------------------------------------------------------------------ */
   function clearCards() {
-    document.querySelectorAll(".dialogue .result-card").forEach((el) => el.remove());
+    document.querySelectorAll(".dialogue .result-card, .dialogue .hub-prompt")
+      .forEach((el) => el.remove());
   }
 
   function render() {
@@ -403,7 +538,9 @@
     const id = state.node;
     if (id === "hub") return renderHub();
     if (id === "reveal") return renderReveal();
+    if (id === "FINDINGS") return renderFindings();
     if (String(id).indexOf("END:") === 0) return renderRouteEnd(id.slice(4));
+    if (String(id).indexOf("RETRY:") === 0) return renderDialogue(retakeNode(id.slice(6)));
 
     const node = STORY.nodes[id];
     if (!node) return renderHub();
@@ -444,13 +581,16 @@
    * player is not reading in becomes a subtitle under the line.
    */
   function linesFor(node, char) {
+    /* Second time through a wrong-answer beat, V-TGM has more to say. */
+    const text = node.again && state.visits[state.node] > 1 ? node.again : node.text;
+    const fill = (str) => String(str).replace("{dates}", String(state.dates));
     if (char && char.nativeLang) {
       return {
-        spoken: node.text[char.nativeLang],
-        sub: char.nativeLang === state.lang ? null : node.text[state.lang]
+        spoken: fill(text[char.nativeLang]),
+        sub: char.nativeLang === state.lang ? null : fill(text[state.lang])
       };
     }
-    return { spoken: tr(node.text), sub: null };
+    return { spoken: fill(tr(text)), sub: null };
   }
 
   function renderDialogue(node) {
@@ -480,15 +620,26 @@
   /* ------------------------------- hub ------------------------------ */
   function renderHub() {
     state.cur = null;
-    setScene({ scene: "event", who: "units", r3mi: "happy/present", vtgm: "neutral/idle" });
+    if (!state.hubLine) pickBanter();
+    const pool = STORY.banter[state.hubLine.pool] || STORY.banter.any;
+    const line = pool[state.hubLine.i] || pool[0];
+    const moods = { r3mi: "happy/present", vtgm: "neutral/idle" };
+    moods[line.who] = line.mood;
+    setScene({ scene: "event", who: line.who, r3mi: moods.r3mi, vtgm: moods.vtgm });
     updateChip(null);
     updateMeters();
 
-    $("speaker").textContent = tr(STORY.chars.units.name);
-    $("speaker").style.color = STORY.chars.units.tint;
+    const char = STORY.chars[line.who];
+    $("speaker").textContent = tr(char.name);
+    $("speaker").style.color = char.tint;
     clearChoices();
-    say(t().hub + " " + t().hubSub, null, () => {
+    const L = linesFor(line, char);
+    say(L.spoken, L.sub, () => {
       clearChoices();
+      const q = document.createElement("p");
+      q.className = "hub-prompt";
+      q.textContent = t().hub + " " + t().hubSub;
+      $("choices").parentNode.insertBefore(q, $("choices"));
       STORY.routes.forEach((r) => {
         const rank = state.ranks[r];
         const meta = STORY.routeMeta[r];
@@ -506,9 +657,56 @@
       if (GEO.complete(goldRoutes())) {
         addChoice(t().goFinal, null, () => goto("fin1"), { key: "★" });
       }
+      addChoice(t().findings + " · " + foundCount() + "/" + STORY.findings.length,
+                t().findingsSub, () => goto("FINDINGS"), { key: "▤", className: "findings-btn" });
       $("hint").textContent = t().hint;
     });
     save();
+  }
+
+  /* ----------------------------- findings --------------------------- */
+  function renderFindings() {
+    setScene({ scene: "event", who: "vtgm", r3mi: "happy/idle", vtgm: "neutral/point" });
+    updateChip(null);
+    updateMeters();
+    const char = STORY.chars.vtgm;
+    $("speaker").textContent = tr(char.name);
+    $("speaker").style.color = char.tint;
+    clearChoices();
+    const L = linesFor({ text: STORY.findingsIntro }, char);
+    say(L.spoken, L.sub, () => {
+      clearChoices();
+      const card = document.createElement("div");
+      card.className = "result-card findings-card";
+      const h = document.createElement("h3");
+      h.textContent = t().findings.toUpperCase() + " · " + foundCount() + "/" +
+        STORY.findings.length + " " + t().findingsTally;
+      card.appendChild(h);
+      const list = document.createElement("ol");
+      list.className = "findings";
+      STORY.findings.forEach((f) => {
+        const li = document.createElement("li");
+        const got = !!found[f.id];
+        li.className = got ? "got" : "locked";
+        const title = document.createElement("b");
+        title.textContent = got ? tr(f.title) : "???";
+        const body = document.createElement("span");
+        body.textContent = got ? tr(f.text) : tr(f.hint);
+        li.append(title, body);
+        list.appendChild(li);
+      });
+      card.appendChild(list);
+      if (foundCount() < STORY.findings.length) {
+        const more = document.createElement("p");
+        more.className = "score-line";
+        more.textContent = t().findingsLeft;
+        card.appendChild(more);
+      }
+      $("choices").parentNode.insertBefore(card, $("choices"));
+      addChoice(t().back, null, () => goto(state.findingsFrom === "reveal" ? "reveal" : "hub"),
+                { key: "◂" });
+      $("hint").textContent = t().hint;
+    });
   }
 
   /* --------------------------- route result ------------------------- */
@@ -606,6 +804,7 @@
 
     const digits = GEO.digits(goldRoutes());
     if (!digits) return renderHub();
+    award("certified");
     const coords = GEO.format(digits);
 
     $("speaker").textContent = tr(STORY.chars.units.name);
@@ -648,7 +847,9 @@
       card.appendChild(log);
       $("choices").parentNode.insertBefore(card, $("choices"));
 
-      addChoice(t().copyLog, null, () => copy(buildLog(), null), { key: "⎘" });
+      addChoice(t().copyLog, null, () => { award("logger"); copy(buildLog(), null); }, { key: "⎘" });
+      addChoice(t().findings + " · " + foundCount() + "/" + STORY.findings.length,
+                t().findingsSub, () => goto("FINDINGS"), { key: "▤", className: "findings-btn" });
       addChoice(t().newGame, null, () => {
         if (confirm(t().confirm)) hardReset();
       }, { key: "↻" });
@@ -954,6 +1155,7 @@
 
   function toggleLang() {
     state.lang = state.lang === "de" ? "en" : "de";
+    if (state.started && state.cur) award("bilingual");
     save();
     sfx("blip");
     if (state.started) render(); else applyStaticText();
