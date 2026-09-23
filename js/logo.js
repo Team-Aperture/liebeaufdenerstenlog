@@ -409,7 +409,9 @@ window.LOGO = (function () {
   /** The certification tab in the bottom-right corner. */
   function sectorTab(ctx, x, y, w, h, code) {
     poly(ctx, x, y, w, h, 2, C.edge);
-    poly(ctx, x + 1, y + 1, w - 2, h - 2, 1, silver);
+    /* flatter than the strip's silver, so the small code stays legible */
+    poly(ctx, x + 1, y + 1, w - 2, h - 2, 1, (i, n) =>
+      (i < 2 ? C.chromeHot : i < n - 1 ? C.chromeLite : C.chromeMid));
     ART.text(ctx, "SEKTOR", x + Math.round((w - ART.textWidth("SEKTOR", 1)) / 2),
              y + 2, 1, C.ink);
     px(ctx, x + 3, y + 7, w - 6, 1, C.pinkDeep);
